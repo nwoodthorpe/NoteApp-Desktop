@@ -1,5 +1,6 @@
 package NoteSystem;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
@@ -7,6 +8,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -42,8 +45,7 @@ public class NoteSystem extends JFrame {
     };
 
     Object[][] data = {
-        {"", "",
-            "", ""}
+        {"", "", "", ""}
     };
 
     public String[] allowedExtensions
@@ -75,6 +77,14 @@ public class NoteSystem extends JFrame {
         JMenuBar menuBar = new JMenuBar();
 
         JMenu fileMenu = new JMenu("File");
+        
+        JMenuItem settingsButton = new JMenuItem("Settings");
+        settingsButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            }
+        });
         JMenuItem exitButton = new JMenuItem("Exit");
         exitButton.addActionListener(new ActionListener() {
             @Override
@@ -225,6 +235,7 @@ public class NoteSystem extends JFrame {
         frame.setVisible(true);
     }
 
+    //Return true if extension is allowed
     public boolean extensionAllowed(File file) {
         String extension = "";
         int i = file.getPath().lastIndexOf('.');
@@ -239,12 +250,48 @@ public class NoteSystem extends JFrame {
         }
         return false;
     }
+    
+    //Returns true if the tags entered are valid
+    public String[] checkTags(String tags){
+        String[] seperatedTags = tags.split(",");
+        ArrayList<String> tagsList = new ArrayList<String>(Arrays.asList(seperatedTags));
+        
+        for(int i = 0; i<tagsList.size(); i++){
+            tagsList.set(i, tagsList.get(i).toString().trim());
+        }
+        
+        for(int i = tagsList.size() - 1; i>=0; i--){
+            if(tagsList.get(i).toString().length() == 0){
+                tagsList.remove(i);
+            }
+        }
+        String[] x = new String[0];
+        return(tagsList.toArray(new String[tagsList.size()]));
+    }
 
     public void buttonPressed() {
         //Create the "Add Note" Dialog
         final JDialog dialog = new JDialog();
         dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         dialog.setSize(400, 300);
+        
+        //Error labels
+        final JLabel selectErrorLabel = new JLabel(" "){{
+            setFont(new Font("Arial", Font.PLAIN, 14));
+            setForeground(Color.RED);
+        }};
+        final JLabel titleErrorLabel = new JLabel(" "){{
+            setFont(new Font("Arial", Font.PLAIN, 14));
+            setForeground(Color.RED);
+        }};
+        final JLabel descriptionErrorLabel = new JLabel(" "){{
+            setFont(new Font("Arial", Font.PLAIN, 14));
+            setForeground(Color.RED);
+        }};
+        final JLabel tagErrorLabel = new JLabel(" "){{
+            setFont(new Font("Arial", Font.PLAIN, 14));
+            setForeground(Color.RED);
+        }};
 
         JPanel contentPanel = (JPanel) dialog.getContentPane();
         contentPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
@@ -254,7 +301,7 @@ public class NoteSystem extends JFrame {
         JPanel titlePanel = new JPanel();
         titlePanel.setLayout(new BoxLayout(titlePanel, BoxLayout.X_AXIS));
 
-        JLabel titleLabel = new JLabel("Add a New Note");
+        final JLabel titleLabel = new JLabel("Add a New Note");
         titleLabel.setFont(new Font("Arial", Font.BOLD, 20));
         titlePanel.add(titleLabel);
 
@@ -303,12 +350,12 @@ public class NoteSystem extends JFrame {
         };
         noteTitlePanel.setLayout(new BoxLayout(noteTitlePanel, BoxLayout.X_AXIS));
 
-        JLabel noteTitleLabel = new JLabel("Title:  ");
+        final JLabel noteTitleLabel = new JLabel("Title:  ");
         noteTitlePanel.add(noteTitleLabel);
 
         noteTitlePanel.add(Box.createRigidArea(new Dimension(90, 2)));
 
-        JTextField noteTitleField = new JTextField("");
+        final JTextField noteTitleField = new JTextField("");
         noteTitlePanel.add(noteTitleField);
 
         //Panel for the description of the note
@@ -322,12 +369,12 @@ public class NoteSystem extends JFrame {
         };
         noteDescriptionPanel.setLayout(new BoxLayout(noteDescriptionPanel, BoxLayout.X_AXIS));
 
-        JLabel noteDescriptionLabel = new JLabel("Description:  ");
+        final JLabel noteDescriptionLabel = new JLabel("Description:  ");
         noteDescriptionPanel.add(noteDescriptionLabel);
 
         noteDescriptionPanel.add(Box.createRigidArea(new Dimension(50, 2)));
 
-        JTextField noteDescriptionField = new JTextField("");
+        final JTextField noteDescriptionField = new JTextField("");
         noteDescriptionPanel.add(noteDescriptionField);
 
         //Panel for the tags of the note
@@ -341,12 +388,12 @@ public class NoteSystem extends JFrame {
         };
         noteTagsPanel.setLayout(new BoxLayout(noteTagsPanel, BoxLayout.X_AXIS));
 
-        JLabel noteTagsLabel = new JLabel("Tags:  ");
+        final JLabel noteTagsLabel = new JLabel("Tags:  ");
         noteTagsPanel.add(noteTagsLabel);
 
         noteTagsPanel.add(Box.createRigidArea(new Dimension(87, 2)));
 
-        JTextField noteTagsField = new JTextField("");
+        final JTextField noteTagsField = new JTextField("");
         noteTagsPanel.add(noteTagsField);
 
         //Panel for the text below the tags label
@@ -365,7 +412,62 @@ public class NoteSystem extends JFrame {
         addButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent ae) {
-                System.out.println(extensionAllowed(fileChooser.getSelectedFiles()[0]));
+                boolean error = false;
+                
+                //Checking file selector errors
+                if(fileChooser.getSelectedFiles().length == 0){
+                    error = true;
+                    selectErrorLabel.setText("Please select a file.");
+                }else{
+                    for(int i = 0; i<fileChooser.getSelectedFiles().length;i++){
+                        if(!extensionAllowed(fileChooser.getSelectedFiles()[i])){
+                            error = true;
+                        }
+                    }
+                    if(error){
+                        error = true;
+                        selectErrorLabel.setText("File Extension Error");
+                    }
+                }
+                
+                if(!error) selectErrorLabel.setText(" ");
+                
+                //Checking title error
+                if(noteTitleField.getText() == null || noteTitleField.getText().length() == 0){
+                    error = true;
+                    titleErrorLabel.setText("Please enter a title.");
+                }else if(noteTitleField.getText().length() > 20){
+                    error = true;
+                    titleErrorLabel.setText("Please enter a title less than 20 characters.");
+                }else{
+                    titleErrorLabel.setText(" ");
+                }
+                
+                //Checking description error
+                if(noteDescriptionField.getText() == null || noteDescriptionField.getText().length() == 0){
+                    error = true;
+                    descriptionErrorLabel.setText("Please enter a description.");
+                }else{
+                    descriptionErrorLabel.setText(" ");
+                }
+                
+                //Checking tags error
+                String[] tags = checkTags(noteTagsField.getText());
+                if(tags == null || tags.length == 0){
+                    error = true;
+                    tagErrorLabel.setText("Please enter atleast 1 tag.");
+                }else{
+                    tagErrorLabel.setText(" ");
+                }
+                
+                //ADD METHOD TO CHECK FOR EMPTY TAGS
+                if(!error){
+                    System.out.println("Error checking passed.");
+                    System.out.println(tags.length);
+                    for(int i = 0; i<tags.length; i++){
+                        System.out.println(tags[i]);
+                    }
+                }
             }
         });
         buttonPanel.add(addButton);
@@ -381,19 +483,39 @@ public class NoteSystem extends JFrame {
             }
         });
         buttonPanel.add(cancelButton);
+        
+        JPanel selectError = new JPanel();
+        selectError.setLayout(new BoxLayout(selectError, BoxLayout.X_AXIS));
+        selectError.add(selectErrorLabel);
+        selectError.add(Box.createHorizontalGlue());
+        
+        JPanel titleError = new JPanel();
+        titleError.setLayout(new BoxLayout(titleError, BoxLayout.X_AXIS));
+        titleError.add(titleErrorLabel);
+        titleError.add(Box.createHorizontalGlue());
+        
+        JPanel descriptionError = new JPanel();
+        descriptionError.setLayout(new BoxLayout(descriptionError, BoxLayout.X_AXIS));
+        descriptionError.add(descriptionErrorLabel);
+        descriptionError.add(Box.createHorizontalGlue());
+        
+        JPanel tagError = new JPanel();
+        tagError.setLayout(new BoxLayout(tagError, BoxLayout.X_AXIS));
+        tagError.add(tagErrorLabel);
+        tagError.add(Box.createHorizontalGlue());
 
         //Add everything to our contentPanel (Master Panel)
         contentPanel.add(titlePanel);
         contentPanel.add(spacerPanel);
         contentPanel.add(selectFilePanel);
-        contentPanel.add(Box.createRigidArea(new Dimension(15, 15)));
+        contentPanel.add(selectError);
         contentPanel.add(noteTitlePanel);
-        contentPanel.add(Box.createRigidArea(new Dimension(15, 15)));
+        contentPanel.add(titleError);
         contentPanel.add(noteDescriptionPanel);
-        contentPanel.add(Box.createRigidArea(new Dimension(15, 15)));
+        contentPanel.add(descriptionError);
         contentPanel.add(noteTagsPanel);
         contentPanel.add(tagsPanel2);
-        contentPanel.add(Box.createRigidArea(new Dimension(15, 15)));
+        contentPanel.add(tagError);
         contentPanel.add(buttonPanel);
         dialog.setModal(true);
         dialog.setVisible(true);
