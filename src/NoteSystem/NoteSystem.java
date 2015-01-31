@@ -8,8 +8,10 @@ import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.io.File;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Scanner;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -53,6 +55,7 @@ public class NoteSystem extends JFrame {
 
     DefaultTableModel dtm;
     JTable selectionTable;
+    String defaultPath = "C:\\Users\\Nathaniel\\Documents\\NetBeansProjects\\NoteSystem";
 
     protected void initUI() {
         JFrame frame = new JFrame();
@@ -82,7 +85,7 @@ public class NoteSystem extends JFrame {
         settingsButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent ae) {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+                settingsButtonPressed();
             }
         });
         JMenuItem exitButton = new JMenuItem("Exit");
@@ -92,6 +95,7 @@ public class NoteSystem extends JFrame {
                 System.exit(0);
             }
         });
+        fileMenu.add(settingsButton);
         fileMenu.add(exitButton);
 
         menuBar.add(fileMenu);
@@ -174,12 +178,12 @@ public class NoteSystem extends JFrame {
         });
 
         //Add button
-        JButton addButton = new JButton("Add");
+        JButton addButton = new JButton("Add...");
         addButton.addActionListener(new ActionListener() {
 
             @Override
             public void actionPerformed(ActionEvent ae) {
-                buttonPressed();
+                addNoteButtonPressed();
             }
 
         });
@@ -234,6 +238,39 @@ public class NoteSystem extends JFrame {
         frame.setSize(600, 600);
         frame.setVisible(true);
     }
+    
+    //Checks for settings file
+    public static void startUpSettingsCheck() throws Exception{
+        File settingsFile = new File("settings.info");
+        //Make settings file if it does not exist yet.
+        if(!settingsFile.exists()){
+            settingsFile.createNewFile();
+            PrintStream settingsPrinter = new PrintStream(settingsFile);
+            settingsPrinter.println("**Please do not modify or delete this file in any way.");
+            settingsPrinter.println("**Settings may be modified in the settings menu of the application.");
+            settingsPrinter.println("DefaultPath=save");
+            settingsPrinter.close();
+        }
+        
+        Scanner settingsReader = new Scanner(settingsFile);
+        ArrayList<String> settingsList = new ArrayList<>();
+        while(settingsReader.hasNext()){
+            settingsList.add(settingsReader.nextLine());
+        }
+        
+        if(settingsList.size() != 3){
+            System.out.println("FILE CORRUPT - ADD STUFF HERE LATER");
+        }else{
+            int lineSize = settingsList.get(2).length();
+            File defaultPath = new File(settingsList.get(2).substring(12, lineSize));
+            if(!defaultPath.exists()){
+               boolean success = defaultPath.mkdir();
+               if(!success){
+                   System.err.println("ERROR MAKING FOLDER!");
+               }
+            }
+        }
+    }
 
     //Return true if extension is allowed
     public boolean extensionAllowed(File file) {
@@ -251,25 +288,88 @@ public class NoteSystem extends JFrame {
         return false;
     }
     
-    //Returns true if the tags entered are valid
+    //Takes in the raw input from the tags textfield
+    //Outputs the tags in an array with all empty tags removed
+    //and all valid tags trimmed for leading/trailing spaces.
     public String[] checkTags(String tags){
         String[] seperatedTags = tags.split(",");
         ArrayList<String> tagsList = new ArrayList<String>(Arrays.asList(seperatedTags));
         
+        //Trim for leading/trailing spaces
         for(int i = 0; i<tagsList.size(); i++){
             tagsList.set(i, tagsList.get(i).toString().trim());
         }
         
+        //Remove all empty elements
         for(int i = tagsList.size() - 1; i>=0; i--){
-            if(tagsList.get(i).toString().length() == 0){
+            if(tagsList.get(i).length() == 0){
                 tagsList.remove(i);
             }
         }
-        String[] x = new String[0];
         return(tagsList.toArray(new String[tagsList.size()]));
     }
 
-    public void buttonPressed() {
+    public void settingsButtonPressed(){
+        final JDialog dialog = new JDialog();
+        dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        dialog.setSize(600, 300);
+        
+        JPanel contentPanel = (JPanel) dialog.getContentPane();
+        contentPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+        contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+        
+        //Panel for the title
+        JPanel titlePanel = new JPanel();
+        titlePanel.setLayout(new BoxLayout(titlePanel, BoxLayout.X_AXIS));
+
+        final JLabel titleLabel = new JLabel("Settings");
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 20));
+        titlePanel.add(titleLabel);
+        
+        JPanel defaultPathPanel = new JPanel() {
+            @Override
+            public Dimension getMaximumSize() {
+                Dimension max = super.getMaximumSize();
+                max.height = getPreferredSize().height;
+                return max;
+            }
+        };
+        defaultPathPanel.setLayout(new BoxLayout(defaultPathPanel, BoxLayout.X_AXIS));
+        
+        final JLabel savePathLabel = new JLabel("Save Path:");
+        final JFileChooser fileChooser = new JFileChooser(new File(defaultPath)){{
+            setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            this.setMultiSelectionEnabled(false);
+        }};
+        final JTextField selectedFile = new JTextField(defaultPath);
+
+        JButton editSaveButton = new JButton("Browse...");
+        editSaveButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                fileChooser.setMultiSelectionEnabled(false);
+                fileChooser.showOpenDialog(null);
+                if(fileChooser.getSelectedFile() != null)
+                    selectedFile.setText(fileChooser.getSelectedFile().getPath());
+                selectedFile.setCaretPosition(0);
+            }
+        });
+        defaultPathPanel.add(savePathLabel);
+        defaultPathPanel.add(Box.createRigidArea(new Dimension(20, 2)));
+        defaultPathPanel.add(selectedFile);
+        defaultPathPanel.add(Box.createRigidArea(new Dimension(10, 2)));
+        defaultPathPanel.add(editSaveButton);
+        defaultPathPanel.add(Box.createHorizontalGlue());
+        
+        contentPanel.add(titlePanel);
+        contentPanel.add(Box.createRigidArea(new Dimension(15, 15)));
+        contentPanel.add(defaultPathPanel);
+        
+        dialog.setModal(true);
+        dialog.setVisible(true);
+    }
+    
+    public void addNoteButtonPressed() {
         //Create the "Add Note" Dialog
         final JDialog dialog = new JDialog();
         dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
@@ -320,7 +420,7 @@ public class NoteSystem extends JFrame {
         
         final JLabel selectedFile = new JLabel("No File Selected");
 
-        JButton selectButton = new JButton("Select File(s):");
+        JButton selectButton = new JButton("Select File(s)...");
         selectButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent ae) {
@@ -463,7 +563,6 @@ public class NoteSystem extends JFrame {
                 //ADD METHOD TO CHECK FOR EMPTY TAGS
                 if(!error){
                     System.out.println("Error checking passed.");
-                    System.out.println(tags.length);
                     for(int i = 0; i<tags.length; i++){
                         System.out.println(tags[i]);
                     }
@@ -506,7 +605,7 @@ public class NoteSystem extends JFrame {
 
         //Add everything to our contentPanel (Master Panel)
         contentPanel.add(titlePanel);
-        contentPanel.add(spacerPanel);
+        contentPanel.add(Box.createRigidArea(new Dimension(15, 15)));
         contentPanel.add(selectFilePanel);
         contentPanel.add(selectError);
         contentPanel.add(noteTitlePanel);
@@ -522,6 +621,11 @@ public class NoteSystem extends JFrame {
     }
 
     public static void main(String[] args) {
+        try{
+            startUpSettingsCheck();
+        }catch(Exception e){
+            System.err.println("SETTINGS ERROR");       
+        }
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
