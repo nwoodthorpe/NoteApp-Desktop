@@ -8,7 +8,14 @@ import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.channels.FileChannel;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Scanner;
@@ -55,7 +62,7 @@ public class NoteSystem extends JFrame {
 
     DefaultTableModel dtm;
     JTable selectionTable;
-    String defaultPath = "C:\\Users\\Nathaniel\\Documents\\NetBeansProjects\\NoteSystem";
+    static String defaultPath = "C:\\Users\\Nathaniel\\Documents\\NetBeansProjects\\NoteSystem";
 
     protected void initUI() {
         JFrame frame = new JFrame();
@@ -80,7 +87,7 @@ public class NoteSystem extends JFrame {
         JMenuBar menuBar = new JMenuBar();
 
         JMenu fileMenu = new JMenu("File");
-        
+
         JMenuItem settingsButton = new JMenuItem("Settings");
         settingsButton.addActionListener(new ActionListener() {
             @Override
@@ -238,38 +245,62 @@ public class NoteSystem extends JFrame {
         frame.setSize(600, 600);
         frame.setVisible(true);
     }
-    
+
     //Checks for settings file
-    public static void startUpSettingsCheck() throws Exception{
+    public static void startUpSettingsCheck() throws Exception {
         File settingsFile = new File("settings.info");
         //Make settings file if it does not exist yet.
-        if(!settingsFile.exists()){
+        if (!settingsFile.exists()) {
             settingsFile.createNewFile();
+            Path currentRelativePath = Paths.get("");
+            String currentPath = currentRelativePath.toAbsolutePath().toString();
             PrintStream settingsPrinter = new PrintStream(settingsFile);
-            settingsPrinter.println("**Please do not modify or delete this file in any way.");
+            settingsPrinter.println("**Please do not modify or delete this file.");
             settingsPrinter.println("**Settings may be modified in the settings menu of the application.");
-            settingsPrinter.println("DefaultPath=save");
+            settingsPrinter.println("DefaultPath=" + currentPath + "\\save");
             settingsPrinter.close();
         }
-        
+
         Scanner settingsReader = new Scanner(settingsFile);
         ArrayList<String> settingsList = new ArrayList<>();
-        while(settingsReader.hasNext()){
+        while (settingsReader.hasNext()) {
             settingsList.add(settingsReader.nextLine());
         }
-        
-        if(settingsList.size() != 3){
+
+        if (settingsList.size() != 3) {
             System.out.println("FILE CORRUPT - ADD STUFF HERE LATER");
-        }else{
+        } else {
             int lineSize = settingsList.get(2).length();
-            File defaultPath = new File(settingsList.get(2).substring(12, lineSize));
-            if(!defaultPath.exists()){
-               boolean success = defaultPath.mkdir();
-               if(!success){
-                   System.err.println("ERROR MAKING FOLDER!");
-               }
+            defaultPath = settingsList.get(2).substring(12, lineSize);
+            File defaultFile = new File(defaultPath);
+            if (!defaultFile.exists()) {
+                boolean success = defaultFile.mkdir();
+                if (!success) {
+                    System.err.println("ERROR MAKING FOLDER!");
+                }
             }
+
         }
+    }
+
+    //Change default path in settings file
+    public void rewriteDefaultPath(File newDefaultPath) throws IOException {
+        defaultPath = newDefaultPath.getPath();
+        Scanner settingsReader = new Scanner(new File("settings.info"));
+        ArrayList<String> settingsList = new ArrayList<>();
+        while (settingsReader.hasNext()) {
+            settingsList.add(settingsReader.nextLine());
+            System.out.println(settingsList.get(settingsList.size() - 1));
+        }
+        settingsReader.close();
+
+        settingsList.set(2, "DefaultPath=" + defaultPath);
+
+        PrintStream settingsWriter = new PrintStream(new File("settings.info"));
+        for (int i = 0; i < settingsList.size(); i++) {
+            settingsWriter.println(settingsList.get(i));
+        }
+        settingsWriter.close();
     }
 
     //Return true if extension is allowed
@@ -279,45 +310,58 @@ public class NoteSystem extends JFrame {
         if (i > 0) {
             extension = file.getPath().substring(i + 1);
         }
-        
+
         extension = extension.toLowerCase();
-        for(int j = 0; j<allowedExtensions.length; j++){
-            if(extension.equals(allowedExtensions[j]))
+        for (int j = 0; j < allowedExtensions.length; j++) {
+            if (extension.equals(allowedExtensions[j])) {
                 return true;
+            }
         }
         return false;
     }
-    
+
     //Takes in the raw input from the tags textfield
     //Outputs the tags in an array with all empty tags removed
     //and all valid tags trimmed for leading/trailing spaces.
-    public String[] checkTags(String tags){
+    public String[] checkTags(String tags) {
         String[] seperatedTags = tags.split(",");
         ArrayList<String> tagsList = new ArrayList<String>(Arrays.asList(seperatedTags));
-        
+
         //Trim for leading/trailing spaces
-        for(int i = 0; i<tagsList.size(); i++){
+        for (int i = 0; i < tagsList.size(); i++) {
             tagsList.set(i, tagsList.get(i).toString().trim());
         }
-        
+
         //Remove all empty elements
-        for(int i = tagsList.size() - 1; i>=0; i--){
-            if(tagsList.get(i).length() == 0){
+        for (int i = tagsList.size() - 1; i >= 0; i--) {
+            if (tagsList.get(i).length() == 0) {
                 tagsList.remove(i);
             }
         }
-        return(tagsList.toArray(new String[tagsList.size()]));
+        return (tagsList.toArray(new String[tagsList.size()]));
     }
 
-    public void settingsButtonPressed(){
+    public static void copyFile(File from, File to) throws IOException {
+        if (!to.exists()) {
+            to.createNewFile();
+        }
+
+        try (
+                FileChannel in = new FileInputStream(from).getChannel();
+                FileChannel out = new FileOutputStream(to).getChannel()) {
+            out.transferFrom(in, 0, in.size());
+        }
+    }
+
+    public void settingsButtonPressed() {
         final JDialog dialog = new JDialog();
         dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         dialog.setSize(600, 300);
-        
+
         JPanel contentPanel = (JPanel) dialog.getContentPane();
         contentPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
         contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
-        
+
         //Panel for the title
         JPanel titlePanel = new JPanel();
         titlePanel.setLayout(new BoxLayout(titlePanel, BoxLayout.X_AXIS));
@@ -325,7 +369,7 @@ public class NoteSystem extends JFrame {
         final JLabel titleLabel = new JLabel("Settings");
         titleLabel.setFont(new Font("Arial", Font.BOLD, 20));
         titlePanel.add(titleLabel);
-        
+
         JPanel defaultPathPanel = new JPanel() {
             @Override
             public Dimension getMaximumSize() {
@@ -335,12 +379,14 @@ public class NoteSystem extends JFrame {
             }
         };
         defaultPathPanel.setLayout(new BoxLayout(defaultPathPanel, BoxLayout.X_AXIS));
-        
+
         final JLabel savePathLabel = new JLabel("Save Path:");
-        final JFileChooser fileChooser = new JFileChooser(new File(defaultPath)){{
-            setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-            this.setMultiSelectionEnabled(false);
-        }};
+        final JFileChooser fileChooser = new JFileChooser(new File(defaultPath)) {
+            {
+                setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+                this.setMultiSelectionEnabled(false);
+            }
+        };
         final JTextField selectedFile = new JTextField(defaultPath);
 
         JButton editSaveButton = new JButton("Browse...");
@@ -349,8 +395,9 @@ public class NoteSystem extends JFrame {
             public void actionPerformed(ActionEvent ae) {
                 fileChooser.setMultiSelectionEnabled(false);
                 fileChooser.showOpenDialog(null);
-                if(fileChooser.getSelectedFile() != null)
+                if (fileChooser.getSelectedFile() != null) {
                     selectedFile.setText(fileChooser.getSelectedFile().getPath());
+                }
                 selectedFile.setCaretPosition(0);
             }
         });
@@ -360,38 +407,122 @@ public class NoteSystem extends JFrame {
         defaultPathPanel.add(Box.createRigidArea(new Dimension(10, 2)));
         defaultPathPanel.add(editSaveButton);
         defaultPathPanel.add(Box.createHorizontalGlue());
-        
+
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.X_AXIS));
+
+        JButton saveButton = new JButton("Save");
+        saveButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                File defaultFile = new File(selectedFile.getText());
+                if (defaultFile.exists() && defaultFile.isDirectory()) {
+                    if (defaultFile.canWrite() && defaultFile.canRead()) {
+                        try {
+                            rewriteDefaultPath(defaultFile);
+                            System.out.println("We rewrote the file...");
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    } else {
+                        System.out.println("Permissions Error");
+                    }
+                } else {
+                    System.out.println("Directory not valid error");
+                }
+            }
+        });
+
+        JButton cancelButton = new JButton("Cancel");
+        cancelButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                System.out.println("Cancel pressed.");
+                dialog.dispose();
+            }
+        });
+
+        buttonPanel.add(saveButton);
+        buttonPanel.add(Box.createRigidArea(new Dimension(30, 30)));
+        buttonPanel.add(cancelButton);
+
         contentPanel.add(titlePanel);
         contentPanel.add(Box.createRigidArea(new Dimension(15, 15)));
         contentPanel.add(defaultPathPanel);
-        
+        contentPanel.add(Box.createRigidArea(new Dimension(15, 15)));
+        contentPanel.add(buttonPanel);
+
         dialog.setModal(true);
         dialog.setVisible(true);
     }
     
+    public void noteAdded(){
+        final JDialog dialog = new JDialog();
+        dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        dialog.setSize(300, 200);
+        
+        JPanel contentPanel = (JPanel) dialog.getContentPane();
+        contentPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+        contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+        
+        JPanel textPanel = new JPanel();
+        textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.X_AXIS));
+
+        final JLabel titleLabel = new JLabel("Successfully Added!");
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 20));
+        textPanel.add(titleLabel);
+        
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.X_AXIS));
+        
+        JButton okButton = new JButton("OK");
+        okButton.addActionListener(new ActionListener(){
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                dialog.dispose();
+            }
+        });
+        buttonPanel.add(okButton);
+        
+        contentPanel.add(textPanel);
+        contentPanel.add(Box.createRigidArea(new Dimension(40, 40)));
+        contentPanel.add(buttonPanel);
+        
+        dialog.setModal(true);
+        dialog.setVisible(true);
+    }
+
     public void addNoteButtonPressed() {
         //Create the "Add Note" Dialog
         final JDialog dialog = new JDialog();
         dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         dialog.setSize(400, 300);
-        
+
         //Error labels
-        final JLabel selectErrorLabel = new JLabel(" "){{
-            setFont(new Font("Arial", Font.PLAIN, 14));
-            setForeground(Color.RED);
-        }};
-        final JLabel titleErrorLabel = new JLabel(" "){{
-            setFont(new Font("Arial", Font.PLAIN, 14));
-            setForeground(Color.RED);
-        }};
-        final JLabel descriptionErrorLabel = new JLabel(" "){{
-            setFont(new Font("Arial", Font.PLAIN, 14));
-            setForeground(Color.RED);
-        }};
-        final JLabel tagErrorLabel = new JLabel(" "){{
-            setFont(new Font("Arial", Font.PLAIN, 14));
-            setForeground(Color.RED);
-        }};
+        final JLabel selectErrorLabel = new JLabel(" ") {
+            {
+                setFont(new Font("Arial", Font.PLAIN, 14));
+                setForeground(Color.RED);
+            }
+        };
+        final JLabel titleErrorLabel = new JLabel(" ") {
+            {
+                setFont(new Font("Arial", Font.PLAIN, 14));
+                setForeground(Color.RED);
+            }
+        };
+        final JLabel descriptionErrorLabel = new JLabel(" ") {
+            {
+                setFont(new Font("Arial", Font.PLAIN, 14));
+                setForeground(Color.RED);
+            }
+        };
+        final JLabel tagErrorLabel = new JLabel(" ") {
+            {
+                setFont(new Font("Arial", Font.PLAIN, 14));
+                setForeground(Color.RED);
+            }
+        };
 
         JPanel contentPanel = (JPanel) dialog.getContentPane();
         contentPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
@@ -417,7 +548,7 @@ public class NoteSystem extends JFrame {
 
         String filename = File.separator + "tmp";
         final JFileChooser fileChooser = new JFileChooser(new File(filename));
-        
+
         final JLabel selectedFile = new JLabel("No File Selected");
 
         JButton selectButton = new JButton("Select File(s)...");
@@ -513,58 +644,97 @@ public class NoteSystem extends JFrame {
             @Override
             public void actionPerformed(ActionEvent ae) {
                 boolean error = false;
-                
+
                 //Checking file selector errors
-                if(fileChooser.getSelectedFiles().length == 0){
+                if (fileChooser.getSelectedFiles().length == 0) {
                     error = true;
                     selectErrorLabel.setText("Please select a file.");
-                }else{
-                    for(int i = 0; i<fileChooser.getSelectedFiles().length;i++){
-                        if(!extensionAllowed(fileChooser.getSelectedFiles()[i])){
+                } else {
+                    for (int i = 0; i < fileChooser.getSelectedFiles().length; i++) {
+                        if (!extensionAllowed(fileChooser.getSelectedFiles()[i])) {
                             error = true;
                         }
                     }
-                    if(error){
+                    if (error) {
                         error = true;
                         selectErrorLabel.setText("File Extension Error");
                     }
                 }
-                
-                if(!error) selectErrorLabel.setText(" ");
-                
+
+                if (!error) {
+                    selectErrorLabel.setText(" ");
+                }
+
                 //Checking title error
-                if(noteTitleField.getText() == null || noteTitleField.getText().length() == 0){
+                if (noteTitleField.getText() == null || noteTitleField.getText().length() == 0) {
                     error = true;
                     titleErrorLabel.setText("Please enter a title.");
-                }else if(noteTitleField.getText().length() > 20){
+                } else if (noteTitleField.getText().length() > 20) {
                     error = true;
                     titleErrorLabel.setText("Please enter a title less than 20 characters.");
-                }else{
+                } else if (new File(defaultPath + "/" + noteTitleField.getText()).exists()) {
+                    error = true;
+                    titleErrorLabel.setText("A note with this title exists! Please choose a new title!");
+                } else {
                     titleErrorLabel.setText(" ");
                 }
-                
+
                 //Checking description error
-                if(noteDescriptionField.getText() == null || noteDescriptionField.getText().length() == 0){
+                if (noteDescriptionField.getText() == null || noteDescriptionField.getText().length() == 0) {
                     error = true;
                     descriptionErrorLabel.setText("Please enter a description.");
-                }else{
+                } else {
                     descriptionErrorLabel.setText(" ");
                 }
-                
+
                 //Checking tags error
                 String[] tags = checkTags(noteTagsField.getText());
-                if(tags == null || tags.length == 0){
+                if (tags == null || tags.length == 0) {
                     error = true;
                     tagErrorLabel.setText("Please enter atleast 1 tag.");
-                }else{
+                } else {
                     tagErrorLabel.setText(" ");
                 }
-                
-                //ADD METHOD TO CHECK FOR EMPTY TAGS
-                if(!error){
-                    System.out.println("Error checking passed.");
-                    for(int i = 0; i<tags.length; i++){
-                        System.out.println(tags[i]);
+
+                if (!error) {
+                    boolean success = false;
+                    File newFolder = new File(defaultPath + "/" + noteTitleField.getText());
+                    newFolder.mkdir();
+                    File noteInfo = new File(newFolder + "/data.info");
+                    try {
+                        noteInfo.createNewFile();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    try {
+                        PrintStream infoPrinter = new PrintStream(noteInfo);
+                        infoPrinter.println("**Please do not modify or delete this file.");
+                        infoPrinter.println("**Settings may be modified in the settings menu of the application.");
+                        infoPrinter.println("Title=" + noteTitleField.getText());
+                        infoPrinter.println("Description=" + noteDescriptionField.getText());
+                        infoPrinter.println("Tags=" + noteTagsField.getText());
+                        infoPrinter.close();
+                        for (int i = 0; i < fileChooser.getSelectedFiles().length; i++) {
+                            File originalFile = fileChooser.getSelectedFiles()[i];
+
+                            String extension = "";
+                            int j = originalFile.getPath().lastIndexOf('.');
+                            if (j > 0) {
+                                extension = originalFile.getPath().substring(j + 1).toLowerCase();
+                            }
+
+                            File destinationFile = new File(newFolder + "/" + i + "." + extension);
+                            copyFile(originalFile, destinationFile);
+                            success = true;
+                        }
+                    } catch (Exception e) {
+                        System.out.println("File not found for some reason...");
+                    }
+
+                    System.out.println("Saved!");
+                    if(success){
+                        noteAdded();
+                        dialog.dispose();
                     }
                 }
             }
@@ -582,22 +752,22 @@ public class NoteSystem extends JFrame {
             }
         });
         buttonPanel.add(cancelButton);
-        
+
         JPanel selectError = new JPanel();
         selectError.setLayout(new BoxLayout(selectError, BoxLayout.X_AXIS));
         selectError.add(selectErrorLabel);
         selectError.add(Box.createHorizontalGlue());
-        
+
         JPanel titleError = new JPanel();
         titleError.setLayout(new BoxLayout(titleError, BoxLayout.X_AXIS));
         titleError.add(titleErrorLabel);
         titleError.add(Box.createHorizontalGlue());
-        
+
         JPanel descriptionError = new JPanel();
         descriptionError.setLayout(new BoxLayout(descriptionError, BoxLayout.X_AXIS));
         descriptionError.add(descriptionErrorLabel);
         descriptionError.add(Box.createHorizontalGlue());
-        
+
         JPanel tagError = new JPanel();
         tagError.setLayout(new BoxLayout(tagError, BoxLayout.X_AXIS));
         tagError.add(tagErrorLabel);
@@ -621,10 +791,10 @@ public class NoteSystem extends JFrame {
     }
 
     public static void main(String[] args) {
-        try{
+        try {
             startUpSettingsCheck();
-        }catch(Exception e){
-            System.err.println("SETTINGS ERROR");       
+        } catch (Exception e) {
+            System.err.println("SETTINGS ERROR");
         }
         SwingUtilities.invokeLater(new Runnable() {
             @Override
