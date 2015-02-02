@@ -9,15 +9,18 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Scanner;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -47,6 +50,7 @@ import javax.swing.table.DefaultTableModel;
  */
 public class NoteSystem extends JFrame {
 
+    public NoteList noteList;
     public String[] columnNames = {"Date",
         "Title",
         "Description",
@@ -58,11 +62,12 @@ public class NoteSystem extends JFrame {
     };
 
     public String[] allowedExtensions
-            = {"png", "bmp", "jpeg", "doc", "docx", "jpg"};
+            = {"png", "bmp", "jpeg", "doc", "docx", "jpg", "txt"};
 
     DefaultTableModel dtm;
     JTable selectionTable;
     static String defaultPath = "C:\\Users\\Nathaniel\\Documents\\NetBeansProjects\\NoteSystem";
+    int pageNum = 1;
 
     protected void initUI() {
         JFrame frame = new JFrame();
@@ -75,7 +80,7 @@ public class NoteSystem extends JFrame {
         JPanel titlePanel = new JPanel();
         titlePanel.setLayout(new BoxLayout(titlePanel, BoxLayout.X_AXIS));
 
-        JLabel title = new JLabel("Title will be Here");
+        JLabel title = new JLabel("Title will be here");
         title.setFont(new Font("Arial", Font.BOLD, 25));
         titlePanel.add(title);
 
@@ -169,7 +174,6 @@ public class NoteSystem extends JFrame {
         };
         searchField.setPreferredSize(new Dimension(180, 25));
         searchField.addFocusListener(new FocusListener() {
-
             @Override
             public void focusGained(FocusEvent fe) {
                 JTextField search = (JTextField) fe.getSource();
@@ -187,12 +191,10 @@ public class NoteSystem extends JFrame {
         //Add button
         JButton addButton = new JButton("Add...");
         addButton.addActionListener(new ActionListener() {
-
             @Override
             public void actionPerformed(ActionEvent ae) {
                 addNoteButtonPressed();
             }
-
         });
 
         //Add all the components to our panel
@@ -247,7 +249,7 @@ public class NoteSystem extends JFrame {
     }
 
     //Checks for settings file
-    public static void startUpSettingsCheck() throws Exception {
+    public void startUpSettingsCheck() throws Exception {
         File settingsFile = new File("settings.info");
         //Make settings file if it does not exist yet.
         if (!settingsFile.exists()) {
@@ -281,6 +283,8 @@ public class NoteSystem extends JFrame {
             }
 
         }
+        noteList = new NoteList(defaultPath);
+        noteList.refreshNoteList();
     }
 
     //Change default path in settings file
@@ -290,7 +294,6 @@ public class NoteSystem extends JFrame {
         ArrayList<String> settingsList = new ArrayList<>();
         while (settingsReader.hasNext()) {
             settingsList.add(settingsReader.nextLine());
-            System.out.println(settingsList.get(settingsList.size() - 1));
         }
         settingsReader.close();
 
@@ -318,27 +321,6 @@ public class NoteSystem extends JFrame {
             }
         }
         return false;
-    }
-
-    //Takes in the raw input from the tags textfield
-    //Outputs the tags in an array with all empty tags removed
-    //and all valid tags trimmed for leading/trailing spaces.
-    public String[] checkTags(String tags) {
-        String[] seperatedTags = tags.split(",");
-        ArrayList<String> tagsList = new ArrayList<String>(Arrays.asList(seperatedTags));
-
-        //Trim for leading/trailing spaces
-        for (int i = 0; i < tagsList.size(); i++) {
-            tagsList.set(i, tagsList.get(i).toString().trim());
-        }
-
-        //Remove all empty elements
-        for (int i = tagsList.size() - 1; i >= 0; i--) {
-            if (tagsList.get(i).length() == 0) {
-                tagsList.remove(i);
-            }
-        }
-        return (tagsList.toArray(new String[tagsList.size()]));
     }
 
     public static void copyFile(File from, File to) throws IOException {
@@ -455,39 +437,39 @@ public class NoteSystem extends JFrame {
         dialog.setModal(true);
         dialog.setVisible(true);
     }
-    
-    public void noteAdded(){
+
+    public void noteAdded() {
         final JDialog dialog = new JDialog();
         dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         dialog.setSize(300, 200);
-        
+
         JPanel contentPanel = (JPanel) dialog.getContentPane();
         contentPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
         contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
-        
+
         JPanel textPanel = new JPanel();
         textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.X_AXIS));
 
         final JLabel titleLabel = new JLabel("Successfully Added!");
         titleLabel.setFont(new Font("Arial", Font.BOLD, 20));
         textPanel.add(titleLabel);
-        
+
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.X_AXIS));
-        
+
         JButton okButton = new JButton("OK");
-        okButton.addActionListener(new ActionListener(){
+        okButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent ae) {
                 dialog.dispose();
             }
         });
         buttonPanel.add(okButton);
-        
+
         contentPanel.add(textPanel);
         contentPanel.add(Box.createRigidArea(new Dimension(40, 40)));
         contentPanel.add(buttonPanel);
-        
+
         dialog.setModal(true);
         dialog.setVisible(true);
     }
@@ -688,7 +670,7 @@ public class NoteSystem extends JFrame {
                 }
 
                 //Checking tags error
-                String[] tags = checkTags(noteTagsField.getText());
+                String[] tags = noteList.formatTags(noteTagsField.getText());
                 if (tags == null || tags.length == 0) {
                     error = true;
                     tagErrorLabel.setText("Please enter atleast 1 tag.");
@@ -707,12 +689,17 @@ public class NoteSystem extends JFrame {
                         e.printStackTrace();
                     }
                     try {
+                        Calendar currentDate = Calendar.getInstance();
+                        SimpleDateFormat formatter = new SimpleDateFormat("yyyy.MM.dd");
+                        String todaysDate = formatter.format(currentDate.getTime());
+
                         PrintStream infoPrinter = new PrintStream(noteInfo);
                         infoPrinter.println("**Please do not modify or delete this file.");
                         infoPrinter.println("**Settings may be modified in the settings menu of the application.");
                         infoPrinter.println("Title=" + noteTitleField.getText());
                         infoPrinter.println("Description=" + noteDescriptionField.getText());
                         infoPrinter.println("Tags=" + noteTagsField.getText());
+                        infoPrinter.println("Date=" + todaysDate);
                         infoPrinter.close();
                         for (int i = 0; i < fileChooser.getSelectedFiles().length; i++) {
                             File originalFile = fileChooser.getSelectedFiles()[i];
@@ -732,7 +719,7 @@ public class NoteSystem extends JFrame {
                     }
 
                     System.out.println("Saved!");
-                    if(success){
+                    if (success) {
                         noteAdded();
                         dialog.dispose();
                     }
@@ -791,15 +778,16 @@ public class NoteSystem extends JFrame {
     }
 
     public static void main(String[] args) {
-        try {
-            startUpSettingsCheck();
-        } catch (Exception e) {
-            System.err.println("SETTINGS ERROR");
-        }
+
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
                 NoteSystem MainWindow = new NoteSystem();
+                try {
+                    MainWindow.startUpSettingsCheck();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
                 MainWindow.initUI();
             }
         });
