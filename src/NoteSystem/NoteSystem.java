@@ -48,13 +48,14 @@ import javax.swing.table.DefaultTableModel;
  *
  * @author Nathaniel
  */
+
 public class NoteSystem extends JFrame {
 
     public NoteList noteList;
     public String[] columnNames = {"Date",
         "Title",
         "Description",
-        "Format"
+        "Num. of Files"
     };
 
     Object[][] data = {
@@ -67,8 +68,7 @@ public class NoteSystem extends JFrame {
     DefaultTableModel dtm;
     JTable selectionTable;
     static String defaultPath = "C:\\Users\\Nathaniel\\Documents\\NetBeansProjects\\NoteSystem";
-    int pageNum = 1;
-
+    int sortType;
     protected void initUI() {
         JFrame frame = new JFrame();
         JPanel contentPanel = (JPanel) frame.getContentPane();
@@ -130,7 +130,6 @@ public class NoteSystem extends JFrame {
             @Override
             public void actionPerformed(ActionEvent ae) {
                 JComboBox x = (JComboBox) ae.getSource();
-                System.out.println(x.getSelectedItem().toString());
             }
         });
         //Add items to sortbox
@@ -246,11 +245,40 @@ public class NoteSystem extends JFrame {
         frame.setJMenuBar(menuBar);
         frame.setSize(600, 600);
         frame.setVisible(true);
+
+        noteList = new NoteList(defaultPath);
+        try {
+            noteList.refreshNoteList();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        populateTable();
+    }
+
+    //Reads noteList and populates table with data
+    public void populateTable() {
+        noteList.sortList(sortType);
+        ArrayList<Note> list = noteList.list;
+        ((DefaultTableModel) selectionTable.getModel()).setRowCount(0);
+        for (int i = 0; i < list.size(); i++) {
+            String[] row = new String[4];
+            Note currentNote = list.get(i);
+            //Date, Title,Description, Format
+            SimpleDateFormat sdf = new SimpleDateFormat("EEE, MMM d, yyyy");
+            row[0] = sdf.format(currentNote.date.getTime());
+            row[1] = currentNote.title;
+            row[2] = currentNote.description;
+            row[3] = Integer.toString(currentNote.numOfFiles);
+            ((DefaultTableModel) selectionTable.getModel()).addRow(new java.util.Vector<String>(java.util.Arrays.asList(row)));
+
+        }
     }
 
     //Checks for settings file
     public void startUpSettingsCheck() throws Exception {
         File settingsFile = new File("settings.info");
+
         //Make settings file if it does not exist yet.
         if (!settingsFile.exists()) {
             settingsFile.createNewFile();
@@ -283,8 +311,7 @@ public class NoteSystem extends JFrame {
             }
 
         }
-        noteList = new NoteList(defaultPath);
-        noteList.refreshNoteList();
+
     }
 
     //Change default path in settings file
@@ -461,6 +488,9 @@ public class NoteSystem extends JFrame {
         okButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent ae) {
+                noteList.refreshNoteList();
+                noteList.sortList(noteList.SORT_DATE_NEWESTFIRST);
+                populateTable();
                 dialog.dispose();
             }
         });
@@ -690,7 +720,7 @@ public class NoteSystem extends JFrame {
                     }
                     try {
                         Calendar currentDate = Calendar.getInstance();
-                        SimpleDateFormat formatter = new SimpleDateFormat("yyyy.MM.dd");
+                        SimpleDateFormat formatter = new SimpleDateFormat("yyyy.MM.dd h:mm a");
                         String todaysDate = formatter.format(currentDate.getTime());
 
                         PrintStream infoPrinter = new PrintStream(noteInfo);

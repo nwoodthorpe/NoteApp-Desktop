@@ -7,12 +7,14 @@ public class Note {
     String title;
     String description;
     String[] tags;
+    int numOfFiles;
     
-    public Note(String title, String description, String[] tags, Calendar date){
+    public Note(String title, String description, String[] tags, Calendar date, int numOfFiles){
         this.title = title;
         this.description = description;
         this.tags = tags;
         this.date = date;
+        this.numOfFiles = numOfFiles;
     }
     
 }
