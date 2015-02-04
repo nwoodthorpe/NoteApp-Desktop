@@ -14,7 +14,7 @@ public class NoteList {
     ArrayList<Note> list;
     String defaultPath;
     final int SORT_DATE_NEWESTFIRST = 0;
-    final int SORT_DATE_OLDESTFIRST  = 1;
+    final int SORT_DATE_OLDESTFIRST = 1;
     final int SORT_FILESIZE_BIGGESTFIRST = 2;
     final int SORT_FILESIZE_SMALLESTFIRST = 3;
     final int SORT_VIEWS_MOST = 4;
@@ -69,11 +69,25 @@ public class NoteList {
                 Calendar date = Calendar.getInstance();
                 SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy.MM.dd h:mm a");
                 date.setTime(dateFormat.parse(dateString));
-                list.add(new Note(title, description, tags, date, numOfFiles - 1));
+                long size = Long.parseLong(info.get(6).substring(5, info.get(6).length()));
+                list.add(new Note(title, description, tags, date, numOfFiles - 1, size));
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
+    }
+
+    //Used to find note size
+    public long noteSize(File directory) {
+        long length = 0;
+        for (File file : directory.listFiles()) {
+            if (file.isFile() || !file.exists()) {
+                length += file.length();
+            } else {
+                length += noteSize(file);
+            }
+        }
+        return length;
     }
 
     //Takes in the raw input from the tags textfield
@@ -96,41 +110,76 @@ public class NoteList {
         }
         return (tagsList.toArray(new String[tagsList.size()]));
     }
-    
-    public void sortList(int sortMethod){
-        switch(sortMethod){
-            case(SORT_DATE_NEWESTFIRST):
-                System.out.println("before: " + list.get(0).title);
+
+    public void sortList(int sortMethod) {
+        switch (sortMethod) {
+            case (SORT_DATE_NEWESTFIRST):
                 Collections.sort(list, new SortDateNewestFirst());
-                System.out.println("after: " + list.get(0).title);
                 break;
-                
-            case(SORT_DATE_OLDESTFIRST):
-                
+
+            case (SORT_DATE_OLDESTFIRST):
+                Collections.sort(list, new SortDateOldestFirst());
                 break;
-                
-            case(SORT_FILESIZE_BIGGESTFIRST):
-                
+
+            case (SORT_FILESIZE_BIGGESTFIRST):
+                Collections.sort(list, new SortSizeLargestFirst());
                 break;
-                
-            case(SORT_FILESIZE_SMALLESTFIRST):
-                
+
+            case (SORT_FILESIZE_SMALLESTFIRST):
+                Collections.sort(list, new SortSizeSmallestFirst());
                 break;
-                
-            case(SORT_VIEWS_MOST):
-                
+
+            case (SORT_VIEWS_MOST):
+                System.out.println("Views first");
                 break;
-                
+
             default:
                 System.err.println("INVALID SORT METHOD PASSED");
         }
     }
+    
 }
 
 class SortDateNewestFirst implements Comparator<Note> {
+
     @Override
     public int compare(Note a, Note b) {
-        if(a.date.before(b.date)) return 1;
+        if (a.date.before(b.date)) {
+            return 1;
+        }
+        return -1;
+    }
+}
+
+class SortDateOldestFirst implements Comparator<Note> {
+
+    @Override
+    public int compare(Note a, Note b) {
+        if (a.date.after(b.date)) {
+            return 1;
+        }
+        return -1;
+    }
+}
+
+class SortSizeLargestFirst implements Comparator<Note> {
+
+    @Override
+    public int compare(Note a, Note b) {
+        if (a.size < b.size) {
+            return 1;
+        }
+        return -1;
+    }
+}
+
+class SortSizeSmallestFirst implements Comparator<Note> {
+
+    @Override
+    public int compare(Note a, Note b) {
+        if (a.size > b.size) {
+            return 1;
+        }
         return -1;
     }
 }

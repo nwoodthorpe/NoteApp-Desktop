@@ -68,8 +68,10 @@ public class NoteSystem extends JFrame {
     DefaultTableModel dtm;
     JTable selectionTable;
     static String defaultPath = "C:\\Users\\Nathaniel\\Documents\\NetBeansProjects\\NoteSystem";
-    int sortType;
+    int sortType = 0;
+    
     protected void initUI() {
+        noteList = new NoteList(defaultPath);
         JFrame frame = new JFrame();
         JPanel contentPanel = (JPanel) frame.getContentPane();
         contentPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
@@ -125,18 +127,12 @@ public class NoteSystem extends JFrame {
                 return max;
             }
         };
-        //SortBox Action Listener
-        sortBox.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent ae) {
-                JComboBox x = (JComboBox) ae.getSource();
-            }
-        });
+        
         //Add items to sortbox
-        sortBox.addItem("Date - Most Recent");
-        sortBox.addItem("Date - Oldest");
-        sortBox.addItem("File Size - Largest");
-        sortBox.addItem("File Size - Smallest");
+        sortBox.addItem("Date - Newest First");
+        sortBox.addItem("Date - Oldest First");
+        sortBox.addItem("File Size - Largest First");
+        sortBox.addItem("File Size - Smallest First");
         sortBox.addItem("Most Viewed");
 
         //Separator lines
@@ -245,20 +241,30 @@ public class NoteSystem extends JFrame {
         frame.setJMenuBar(menuBar);
         frame.setSize(600, 600);
         frame.setVisible(true);
-
-        noteList = new NoteList(defaultPath);
         try {
             noteList.refreshNoteList();
         } catch (Exception e) {
             e.printStackTrace();
         }
+        
+        //SortBox Action Listener
+        sortBox.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                JComboBox x = (JComboBox) ae.getSource();
+                sortType = x.getSelectedIndex();
+                noteList.sortList(x.getSelectedIndex());
+                populateTable();
+            }
+        });
 
         populateTable();
+        
+        noteList.sortList(noteList.SORT_DATE_NEWESTFIRST);
     }
-
+    
     //Reads noteList and populates table with data
     public void populateTable() {
-        noteList.sortList(sortType);
         ArrayList<Note> list = noteList.list;
         ((DefaultTableModel) selectionTable.getModel()).setRowCount(0);
         for (int i = 0; i < list.size(); i++) {
@@ -489,7 +495,7 @@ public class NoteSystem extends JFrame {
             @Override
             public void actionPerformed(ActionEvent ae) {
                 noteList.refreshNoteList();
-                noteList.sortList(noteList.SORT_DATE_NEWESTFIRST);
+                noteList.sortList(sortType);
                 populateTable();
                 dialog.dispose();
             }
@@ -719,18 +725,6 @@ public class NoteSystem extends JFrame {
                         e.printStackTrace();
                     }
                     try {
-                        Calendar currentDate = Calendar.getInstance();
-                        SimpleDateFormat formatter = new SimpleDateFormat("yyyy.MM.dd h:mm a");
-                        String todaysDate = formatter.format(currentDate.getTime());
-
-                        PrintStream infoPrinter = new PrintStream(noteInfo);
-                        infoPrinter.println("**Please do not modify or delete this file.");
-                        infoPrinter.println("**Settings may be modified in the settings menu of the application.");
-                        infoPrinter.println("Title=" + noteTitleField.getText());
-                        infoPrinter.println("Description=" + noteDescriptionField.getText());
-                        infoPrinter.println("Tags=" + noteTagsField.getText());
-                        infoPrinter.println("Date=" + todaysDate);
-                        infoPrinter.close();
                         for (int i = 0; i < fileChooser.getSelectedFiles().length; i++) {
                             File originalFile = fileChooser.getSelectedFiles()[i];
 
@@ -744,6 +738,20 @@ public class NoteSystem extends JFrame {
                             copyFile(originalFile, destinationFile);
                             success = true;
                         }
+                        Calendar currentDate = Calendar.getInstance();
+                        SimpleDateFormat formatter = new SimpleDateFormat("yyyy.MM.dd h:mm a");
+                        String todaysDate = formatter.format(currentDate.getTime());
+
+                        PrintStream infoPrinter = new PrintStream(noteInfo);
+                        infoPrinter.println("**Please do not modify or delete this file.");
+                        infoPrinter.println("**Settings may be modified in the settings menu of the application.");
+                        infoPrinter.println("Title=" + noteTitleField.getText());
+                        infoPrinter.println("Description=" + noteDescriptionField.getText());
+                        infoPrinter.println("Tags=" + noteTagsField.getText());
+                        infoPrinter.println("Date=" + todaysDate);
+                        infoPrinter.println("Size=" + noteList.noteSize(newFolder));
+                        infoPrinter.close();
+                        
                     } catch (Exception e) {
                         System.out.println("File not found for some reason...");
                     }
