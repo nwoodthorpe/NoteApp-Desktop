@@ -7,6 +7,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -15,12 +17,9 @@ import java.io.PrintStream;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.Scanner;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -38,6 +37,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
@@ -48,16 +48,15 @@ import javax.swing.table.DefaultTableModel;
  *
  * @author Nathaniel
  */
-
 public class NoteSystem extends JFrame {
 
     public NoteList noteList;
-    public String[] columnNames = {"Date",
-        "Title",
+
+    public String[] columnNames = {"Title",
         "Description",
+        "Date",
         "Num. of Files"
     };
-
     Object[][] data = {
         {"", "", "", ""}
     };
@@ -69,7 +68,7 @@ public class NoteSystem extends JFrame {
     JTable selectionTable;
     static String defaultPath = "C:\\Users\\Nathaniel\\Documents\\NetBeansProjects\\NoteSystem";
     int sortType = 0;
-    
+
     protected void initUI() {
         noteList = new NoteList(defaultPath);
         JFrame frame = new JFrame();
@@ -127,7 +126,7 @@ public class NoteSystem extends JFrame {
                 return max;
             }
         };
-        
+
         //Add items to sortbox
         sortBox.addItem("Date - Newest First");
         sortBox.addItem("Date - Oldest First");
@@ -213,6 +212,7 @@ public class NoteSystem extends JFrame {
 
         //tablePanel, the panel that will hold our table
         JPanel tablePanel = new JPanel();
+
         //Plan to add some sort of comtrol to the left or right of the table
         //So we're using an X_AXIS Boxlayout to make this easy.
         tablePanel.setLayout(new BoxLayout(tablePanel, BoxLayout.X_AXIS));
@@ -225,8 +225,42 @@ public class NoteSystem extends JFrame {
                 return false;
             }
         };
+        selectionTable.setDefaultRenderer(Object.class, new CustomTableRenderer());
         selectionTable.setRowHeight(40);
+        selectionTable.setRowSelectionAllowed(true);
         selectionTable.setShowVerticalLines(false);
+        selectionTable.setShowGrid(false);
+        selectionTable.setIntercellSpacing(new Dimension(0, 0));
+        selectionTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        selectionTable.addMouseListener(new MouseListener() {
+            @Override
+            public void mouseClicked(MouseEvent me) {
+                if (me.getClickCount() == 2) {
+                    System.out.println(selectionTable.getSelectedRow());
+                }
+            }
+
+            @Override
+            public void mousePressed(MouseEvent me) {
+
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent me) {
+
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent me) {
+
+            }
+
+            @Override
+            public void mouseExited(MouseEvent me) {
+
+            }
+        });
+        
         JScrollPane tableHolder = new JScrollPane(selectionTable);
 
         tablePanel.add(tableHolder);
@@ -246,7 +280,7 @@ public class NoteSystem extends JFrame {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        
+
         //SortBox Action Listener
         sortBox.addActionListener(new ActionListener() {
             @Override
@@ -259,10 +293,10 @@ public class NoteSystem extends JFrame {
         });
 
         populateTable();
-        
+
         noteList.sortList(noteList.SORT_DATE_NEWESTFIRST);
     }
-    
+
     //Reads noteList and populates table with data
     public void populateTable() {
         ArrayList<Note> list = noteList.list;
@@ -272,9 +306,9 @@ public class NoteSystem extends JFrame {
             Note currentNote = list.get(i);
             //Date, Title,Description, Format
             SimpleDateFormat sdf = new SimpleDateFormat("EEE, MMM d, yyyy");
-            row[0] = sdf.format(currentNote.date.getTime());
-            row[1] = currentNote.title;
-            row[2] = currentNote.description;
+            row[0] = currentNote.title;
+            row[1] = currentNote.description;
+            row[2] = sdf.format(currentNote.date.getTime());
             row[3] = Integer.toString(currentNote.numOfFiles);
             ((DefaultTableModel) selectionTable.getModel()).addRow(new java.util.Vector<String>(java.util.Arrays.asList(row)));
 
@@ -356,6 +390,7 @@ public class NoteSystem extends JFrame {
         return false;
     }
 
+    //Copies a file, used when to copy note files into the program save folder
     public static void copyFile(File from, File to) throws IOException {
         if (!to.exists()) {
             to.createNewFile();
@@ -368,6 +403,7 @@ public class NoteSystem extends JFrame {
         }
     }
 
+    //Opens the Settings GUI
     public void settingsButtonPressed() {
         final JDialog dialog = new JDialog();
         dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
@@ -435,7 +471,7 @@ public class NoteSystem extends JFrame {
                     if (defaultFile.canWrite() && defaultFile.canRead()) {
                         try {
                             rewriteDefaultPath(defaultFile);
-                            System.out.println("We rewrote the file...");
+                            dialog.dispose();
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -452,7 +488,6 @@ public class NoteSystem extends JFrame {
         cancelButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent ae) {
-                System.out.println("Cancel pressed.");
                 dialog.dispose();
             }
         });
@@ -471,6 +506,7 @@ public class NoteSystem extends JFrame {
         dialog.setVisible(true);
     }
 
+    //Opens the "Note Added" GUI
     public void noteAdded() {
         final JDialog dialog = new JDialog();
         dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
@@ -510,6 +546,7 @@ public class NoteSystem extends JFrame {
         dialog.setVisible(true);
     }
 
+    //Opens the "Add Note" GUI
     public void addNoteButtonPressed() {
         //Create the "Add Note" Dialog
         final JDialog dialog = new JDialog();
@@ -751,12 +788,11 @@ public class NoteSystem extends JFrame {
                         infoPrinter.println("Date=" + todaysDate);
                         infoPrinter.println("Size=" + noteList.noteSize(newFolder));
                         infoPrinter.close();
-                        
+
                     } catch (Exception e) {
                         System.out.println("File not found for some reason...");
                     }
 
-                    System.out.println("Saved!");
                     if (success) {
                         noteAdded();
                         dialog.dispose();
@@ -772,7 +808,6 @@ public class NoteSystem extends JFrame {
         cancelButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent ae) {
-                System.out.println("Cancel Pressed.");
                 dialog.dispose();
             }
         });

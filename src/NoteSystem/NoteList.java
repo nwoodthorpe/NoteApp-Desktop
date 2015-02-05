@@ -38,7 +38,6 @@ public class NoteList {
         list.clear();
         File saveFolder = new File(defaultPath);
         File[] filesInFolder = saveFolder.listFiles();
-        System.out.println(filesInFolder.length);
         ArrayList<File> directoriesInFolder = new ArrayList<>();
         for (int i = 0; i < filesInFolder.length; i++) {
             if (filesInFolder[i].isDirectory()) {
