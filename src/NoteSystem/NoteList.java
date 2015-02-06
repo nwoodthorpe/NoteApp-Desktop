@@ -31,6 +31,11 @@ public class NoteList {
     public void setList(ArrayList<Note> list) {
         this.list = list;
     }
+    
+    //This method will search for a given term and reorder the list acordingly
+    public void searchList(String searchTerm){
+        list = Search.sortListBy(list, searchTerm);
+    }
 
     //This method will refresh the noteList variable
     //by re-reading the data from our default save path.

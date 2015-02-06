@@ -181,6 +181,15 @@ public class NoteSystem extends JFrame {
 
             }
         });
+        
+        searchField.addActionListener(new ActionListener(){
+
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                noteList.searchList(((JTextField)ae.getSource()).getText());
+                populateTable();
+            }
+        });
 
         //Add button
         JButton addButton = new JButton("Add...");
