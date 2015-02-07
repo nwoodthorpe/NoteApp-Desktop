@@ -1,0 +1,64 @@
+package NoteSystem;
+
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.WindowConstants;
+import javax.swing.border.EmptyBorder;
+
+
+public class Form_NoteAdded extends JDialog{
+    NoteSystem mainForm;
+
+    public Form_NoteAdded(NoteSystem mainForm) {
+        super();
+        this.mainForm = mainForm;
+        genGUI();
+    }
+    
+    public void genGUI(){
+        final JDialog dialog = new JDialog();
+        dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        dialog.setSize(300, 200);
+
+        JPanel contentPanel = (JPanel) dialog.getContentPane();
+        contentPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+        contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+
+        JPanel textPanel = new JPanel();
+        textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.X_AXIS));
+
+        final JLabel titleLabel = new JLabel("Successfully Added!");
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 20));
+        textPanel.add(titleLabel);
+
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.X_AXIS));
+
+        JButton okButton = new JButton("OK");
+        okButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                mainForm.noteList.refreshNoteList();
+                mainForm.noteList.sortList(mainForm.sortType);
+                mainForm.populateTable();
+                dialog.dispose();
+            }
+        });
+        buttonPanel.add(okButton);
+
+        contentPanel.add(textPanel);
+        contentPanel.add(Box.createRigidArea(new Dimension(40, 40)));
+        contentPanel.add(buttonPanel);
+
+        dialog.setModal(true);
+        dialog.setVisible(true);
+    }
+}
