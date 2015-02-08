@@ -248,13 +248,7 @@ public class Form_AddNote extends JDialog{
                         for (int i = 0; i < fileChooser.getSelectedFiles().length; i++) {
                             File originalFile = fileChooser.getSelectedFiles()[i];
 
-                            String extension = "";
-                            int j = originalFile.getPath().lastIndexOf('.');
-                            if (j > 0) {
-                                extension = originalFile.getPath().substring(j + 1).toLowerCase();
-                            }
-
-                            File destinationFile = new File(newFolder + "/" + i + "." + extension);
+                            File destinationFile = new File(newFolder + "/" + originalFile.getName());
                             mainForm.copyFile(originalFile, destinationFile);
                             success = true;
                         }
@@ -273,7 +267,7 @@ public class Form_AddNote extends JDialog{
                         infoPrinter.close();
 
                     } catch (Exception e) {
-                        System.out.println("File not found for some reason...");
+                        e.printStackTrace();
                     }
 
                     if (success) {

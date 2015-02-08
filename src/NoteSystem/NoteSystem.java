@@ -1,6 +1,5 @@
 package NoteSystem;
 
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
@@ -19,14 +18,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Scanner;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
-import javax.swing.JDialog;
-import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
@@ -40,7 +36,6 @@ import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
-import javax.swing.WindowConstants;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 
@@ -249,6 +244,7 @@ public class NoteSystem extends JFrame {
             public void mouseClicked(MouseEvent me) {
                 if (me.getClickCount() == 2) {
                     System.out.println(selectionTable.getSelectedRow());
+                    Form_ListNoteContents noteContents = new Form_ListNoteContents(MainWindow, selectionTable.getSelectedRow());
                 }
             }
 
@@ -407,12 +403,13 @@ public class NoteSystem extends JFrame {
         if (!to.exists()) {
             to.createNewFile();
         }
+        System.out.println(to.getPath());
 
         try (
-                FileChannel in = new FileInputStream(from).getChannel();
-                FileChannel out = new FileOutputStream(to).getChannel()) {
-            out.transferFrom(in, 0, in.size());
-        }
+            FileChannel in = new FileInputStream(from).getChannel();
+            FileChannel out = new FileOutputStream(to).getChannel()) {
+                out.transferFrom(in, 0, in.size());
+            }
     }
 
     public static void main(String[] args) {

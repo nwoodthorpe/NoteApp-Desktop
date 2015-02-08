@@ -24,11 +24,10 @@ public class Form_NoteAdded extends JDialog{
     }
     
     public void genGUI(){
-        final JDialog dialog = new JDialog();
-        dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        dialog.setSize(300, 200);
+        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        setSize(300, 200);
 
-        JPanel contentPanel = (JPanel) dialog.getContentPane();
+        JPanel contentPanel = (JPanel) getContentPane();
         contentPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
         contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
 
@@ -49,7 +48,7 @@ public class Form_NoteAdded extends JDialog{
                 mainForm.noteList.refreshNoteList();
                 mainForm.noteList.sortList(mainForm.sortType);
                 mainForm.populateTable();
-                dialog.dispose();
+                dispose();
             }
         });
         buttonPanel.add(okButton);
@@ -58,7 +57,7 @@ public class Form_NoteAdded extends JDialog{
         contentPanel.add(Box.createRigidArea(new Dimension(40, 40)));
         contentPanel.add(buttonPanel);
 
-        dialog.setModal(true);
-        dialog.setVisible(true);
+        setModal(true);
+        setVisible(true);
     }
 }
