@@ -207,9 +207,6 @@ public class Form_AddNote extends JDialog{
                 if (noteTitleField.getText() == null || noteTitleField.getText().length() == 0) {
                     error = true;
                     titleErrorLabel.setText("Please enter a title.");
-                } else if (noteTitleField.getText().length() > 20) {
-                    error = true;
-                    titleErrorLabel.setText("Please enter a title less than 20 characters.");
                 } else if (new File(defaultPath + "/" + noteTitleField.getText()).exists()) {
                     error = true;
                     titleErrorLabel.setText("A note with this title exists! Please choose a new title!");

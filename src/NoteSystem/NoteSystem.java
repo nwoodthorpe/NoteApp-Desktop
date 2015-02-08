@@ -4,6 +4,8 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.MouseEvent;
@@ -57,16 +59,20 @@ public class NoteSystem extends JFrame {
     };
 
     public String[] allowedExtensions
-            = {"png", "bmp", "jpeg", "doc", "docx", "jpg", "txt"};
+            = { "png", "bmp", "jpeg", "jpg",
+                "docx", "doc", 
+                "txt", 
+                "pdf",
+                "zip", "rar"};
 
     DefaultTableModel dtm;
     JTable selectionTable;
-    static String defaultPath = "C:\\Users\\Nathaniel\\Documents\\NetBeansProjects\\NoteSystem";
+    static String defaultPath = Paths.get("").toAbsolutePath().toString();;
     int sortType = 0;
     
     public static NoteSystem MainWindow;
 
-    protected void initUI() {
+    protected void genGUI() {
         noteList = new NoteList(defaultPath);
         JFrame frame = new JFrame();
         JPanel contentPanel = (JPanel) frame.getContentPane();
@@ -239,6 +245,31 @@ public class NoteSystem extends JFrame {
         selectionTable.setShowGrid(false);
         selectionTable.setIntercellSpacing(new Dimension(0, 0));
         selectionTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        selectionTable.addComponentListener(new ComponentListener(){
+            @Override
+            public void componentResized(ComponentEvent ce) {
+                //Reszie table widths to maintain proportions
+                JTable table = (JTable)ce.getSource();
+                int totalWidth = table.getWidth();
+                table.getColumnModel().getColumn(0).setPreferredWidth(5 * (totalWidth/16));
+                table.getColumnModel().getColumn(1).setPreferredWidth(5 * (totalWidth/16));
+                table.getColumnModel().getColumn(2).setPreferredWidth(3 * (totalWidth/16));
+                table.getColumnModel().getColumn(3).setPreferredWidth(3 * (totalWidth/16));
+            }
+
+            @Override
+            public void componentMoved(ComponentEvent ce) {
+            }
+
+            @Override
+            public void componentShown(ComponentEvent ce) {
+            }
+
+            @Override
+            public void componentHidden(ComponentEvent ce) {
+            }
+            
+        });
         selectionTable.addMouseListener(new MouseListener() {
             @Override
             public void mouseClicked(MouseEvent me) {
@@ -423,7 +454,7 @@ public class NoteSystem extends JFrame {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-                MainWindow.initUI();
+                MainWindow.genGUI();
             }
         });
     }
