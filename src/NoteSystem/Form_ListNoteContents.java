@@ -77,10 +77,10 @@ public class Form_ListNoteContents extends JDialog {
             public void mouseClicked(MouseEvent evt) {
                 JList list = (JList) evt.getSource();
                 if (evt.getClickCount() == 2) {
-                    try{
+                    try {
                         File file = noteFiles[list.getSelectedIndex()];
                         Desktop.getDesktop().open(file);
-                    }catch(Exception e){
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }
@@ -93,9 +93,7 @@ public class Form_ListNoteContents extends JDialog {
 
         contentPanel.add(scrollPanel);
 
-        setModal(
-                true);
-        setVisible(
-                true);
+        setModal(true);
+        setVisible(true);
     }
 }

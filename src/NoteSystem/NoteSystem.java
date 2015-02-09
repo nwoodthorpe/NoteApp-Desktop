@@ -2,6 +2,7 @@ package NoteSystem;
 
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
@@ -21,8 +22,10 @@ import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Scanner;
+import javax.imageio.ImageIO;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
@@ -49,6 +52,11 @@ public class NoteSystem extends JFrame {
 
     public NoteList noteList;
 
+    public String[] imagePaths = {"buttons/AddNote.png"};
+
+    public Image[] imageArray = new Image[imagePaths.length];
+    public Image[] scaledImageArray = new Image[imagePaths.length];
+
     public String[] columnNames = {"Title",
         "Description",
         "Date",
@@ -59,17 +67,18 @@ public class NoteSystem extends JFrame {
     };
 
     public String[] allowedExtensions
-            = { "png", "bmp", "jpeg", "jpg",
-                "docx", "doc", 
-                "txt", 
+            = {"png", "bmp", "jpeg", "jpg",
+                "docx", "doc",
+                "txt",
                 "pdf",
                 "zip", "rar"};
 
     DefaultTableModel dtm;
     JTable selectionTable;
-    static String defaultPath = Paths.get("").toAbsolutePath().toString();;
+    static String defaultPath = Paths.get("").toAbsolutePath().toString();
+    ;
     int sortType = 0;
-    
+
     public static NoteSystem MainWindow;
 
     protected void genGUI() {
@@ -184,12 +193,12 @@ public class NoteSystem extends JFrame {
 
             }
         });
-        
-        searchField.addActionListener(new ActionListener(){
+
+        searchField.addActionListener(new ActionListener() {
 
             @Override
             public void actionPerformed(ActionEvent ae) {
-                noteList.searchList(((JTextField)ae.getSource()).getText());
+                noteList.searchList(((JTextField) ae.getSource()).getText());
                 populateTable();
             }
         });
@@ -199,8 +208,25 @@ public class NoteSystem extends JFrame {
         addButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent ae) {
-                //addNoteButtonPressed();
                 Form_AddNote x = new Form_AddNote(MainWindow);
+            }
+        });
+
+        JButton deleteButton = new JButton("Delete");
+        deleteButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                if (selectionTable.getSelectedRow() != -1) {
+                    Form_DeleteNote form = new Form_DeleteNote(MainWindow);
+                    if (form.returnValue) {
+                        String noteTitle = noteList.list.get(selectionTable.getSelectedRow()).title;
+                        File noteFolder = new File(defaultPath + "/" + noteTitle);
+                        System.out.println(deleteDir(noteFolder));
+                        noteList.refreshNoteList();
+                        populateTable();
+
+                    }
+                }
             }
         });
 
@@ -216,6 +242,8 @@ public class NoteSystem extends JFrame {
         topButtonBar.add(secondLine);
         topButtonBar.add(Box.createRigidArea(new Dimension(20, 30)));
         topButtonBar.add(addButton);
+        topButtonBar.add(Box.createRigidArea(new Dimension(20, 30)));
+        topButtonBar.add(deleteButton);
 
         //Spacer panel
         JPanel spacerPanel = new JPanel();
@@ -245,16 +273,16 @@ public class NoteSystem extends JFrame {
         selectionTable.setShowGrid(false);
         selectionTable.setIntercellSpacing(new Dimension(0, 0));
         selectionTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        selectionTable.addComponentListener(new ComponentListener(){
+        selectionTable.addComponentListener(new ComponentListener() {
             @Override
             public void componentResized(ComponentEvent ce) {
                 //Reszie table widths to maintain proportions
-                JTable table = (JTable)ce.getSource();
+                JTable table = (JTable) ce.getSource();
                 int totalWidth = table.getWidth();
-                table.getColumnModel().getColumn(0).setPreferredWidth(5 * (totalWidth/16));
-                table.getColumnModel().getColumn(1).setPreferredWidth(5 * (totalWidth/16));
-                table.getColumnModel().getColumn(2).setPreferredWidth(3 * (totalWidth/16));
-                table.getColumnModel().getColumn(3).setPreferredWidth(3 * (totalWidth/16));
+                table.getColumnModel().getColumn(0).setPreferredWidth(5 * (totalWidth / 16));
+                table.getColumnModel().getColumn(1).setPreferredWidth(5 * (totalWidth / 16));
+                table.getColumnModel().getColumn(2).setPreferredWidth(3 * (totalWidth / 16));
+                table.getColumnModel().getColumn(3).setPreferredWidth(3 * (totalWidth / 16));
             }
 
             @Override
@@ -268,7 +296,7 @@ public class NoteSystem extends JFrame {
             @Override
             public void componentHidden(ComponentEvent ce) {
             }
-            
+
         });
         selectionTable.addMouseListener(new MouseListener() {
             @Override
@@ -299,7 +327,7 @@ public class NoteSystem extends JFrame {
 
             }
         });
-        
+
         JScrollPane tableHolder = new JScrollPane(selectionTable);
 
         tablePanel.add(tableHolder);
@@ -312,7 +340,7 @@ public class NoteSystem extends JFrame {
         contentPanel.add(tablePanel);
 
         frame.setJMenuBar(menuBar);
-        frame.setSize(600, 600);
+        frame.setSize(700, 600);
         frame.setVisible(true);
         try {
             noteList.refreshNoteList();
@@ -332,8 +360,32 @@ public class NoteSystem extends JFrame {
         });
 
         noteList.sortList(noteList.SORT_DATE_NEWESTFIRST);
-        
+
         populateTable();
+    }
+
+    public static boolean deleteDir(File dir) {
+        if (dir.isDirectory()) {
+            String[] children = dir.list();
+            for (int i = 0; i < children.length; i++) {
+                boolean success = deleteDir(new File(dir, children[i]));
+                if (!success) {
+                    return false;
+                }
+            }
+        }
+        
+        return dir.delete();
+    }
+
+    public void loadImages() {
+        for (int i = 0; i < imagePaths.length; i++) {
+            try {
+                imageArray[i] = ImageIO.read(new File("images/" + imagePaths[i]));
+            } catch (IOException e) {
+                System.out.println("IMAGE ERROR");
+            }
+        }
     }
 
     //Reads noteList and populates table with data
@@ -357,6 +409,8 @@ public class NoteSystem extends JFrame {
     //Checks for settings file
     public void startUpSettingsCheck() throws Exception {
         File settingsFile = new File("settings.info");
+
+        loadImages();
 
         //Make settings file if it does not exist yet.
         if (!settingsFile.exists()) {
@@ -437,10 +491,10 @@ public class NoteSystem extends JFrame {
         System.out.println(to.getPath());
 
         try (
-            FileChannel in = new FileInputStream(from).getChannel();
-            FileChannel out = new FileOutputStream(to).getChannel()) {
-                out.transferFrom(in, 0, in.size());
-            }
+                FileChannel in = new FileInputStream(from).getChannel();
+                FileChannel out = new FileOutputStream(to).getChannel()) {
+            out.transferFrom(in, 0, in.size());
+        }
     }
 
     public static void main(String[] args) {
