@@ -3,7 +3,6 @@ An open-source note manager (School use intended, other uses supported) with man
 
 <b>Immediate Planned Features:</b>
 <ul>
-<li>When a note in the table is double clicked, a JDialog will show a list of the associated note files, with the option to open each file in the default extension program.</li>
 <li>Create plain text notes directly from the application.</li>
 <li>Edit plain text notes directly from the application.</li>
 <li>Remove notes from the application and database via a 'delete' button.</li>
