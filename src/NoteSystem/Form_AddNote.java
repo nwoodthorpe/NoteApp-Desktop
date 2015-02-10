@@ -22,17 +22,17 @@ import javax.swing.JTextField;
 import javax.swing.WindowConstants;
 import javax.swing.border.EmptyBorder;
 
+public class Form_AddNote extends JDialog {
 
-public class Form_AddNote extends JDialog{
     NoteSystem mainForm;
-    
-    public Form_AddNote(NoteSystem mainForm){
+
+    public Form_AddNote(NoteSystem mainForm) {
         super();
         this.mainForm = mainForm;
         genGUI();
     }
-    
-    public void genGUI(){
+
+    public void genGUI() {
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setSize(400, 300);
 
@@ -232,7 +232,6 @@ public class Form_AddNote extends JDialog{
                 }
 
                 if (!error) {
-                    boolean success = false;
                     File newFolder = new File(defaultPath + "/" + noteTitleField.getText());
                     newFolder.mkdir();
                     File noteInfo = new File(newFolder + "/data.info");
@@ -247,7 +246,6 @@ public class Form_AddNote extends JDialog{
 
                             File destinationFile = new File(newFolder + "/" + originalFile.getName());
                             mainForm.copyFile(originalFile, destinationFile);
-                            success = true;
                         }
                         Calendar currentDate = Calendar.getInstance();
                         SimpleDateFormat formatter = new SimpleDateFormat("yyyy.MM.dd h:mm a");
@@ -267,10 +265,9 @@ public class Form_AddNote extends JDialog{
                         e.printStackTrace();
                     }
 
-                    if (success) {
-                        Form_NoteAdded noteAdded = new Form_NoteAdded(mainForm);
-                        dispose();
-                    }
+                    Form_NoteAdded noteAdded = new Form_NoteAdded(mainForm);
+                    dispose();
+
                 }
             }
         });

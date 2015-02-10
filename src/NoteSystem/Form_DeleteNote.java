@@ -74,6 +74,8 @@ public class Form_DeleteNote extends JDialog{
         contentPanel.add(Box.createRigidArea(new Dimension(40, 40)));
         contentPanel.add(buttonPanel);
         
+        getRootPane().setDefaultButton(noButton);
+        
         setModal(true);
         setVisible(true);
     }

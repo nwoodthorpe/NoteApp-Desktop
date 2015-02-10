@@ -25,7 +25,6 @@ import java.util.Scanner;
 import javax.imageio.ImageIO;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
@@ -106,6 +105,10 @@ public class NoteSystem extends JFrame {
 
         JMenu fileMenu = new JMenu("File");
 
+        JMenuItem createNoteButton = new JMenuItem("Create New Note...");
+        
+        JMenuItem newNoteButton = new JMenuItem("Add Note....");
+        
         JMenuItem settingsButton = new JMenuItem("Settings");
         settingsButton.addActionListener(new ActionListener() {
             @Override
@@ -120,7 +123,12 @@ public class NoteSystem extends JFrame {
                 System.exit(0);
             }
         });
+        
+        fileMenu.add(createNoteButton);
+        fileMenu.add(newNoteButton);
+        fileMenu.add(new JSeparator());
         fileMenu.add(settingsButton);
+        fileMenu.add(new JSeparator());
         fileMenu.add(exitButton);
 
         menuBar.add(fileMenu);
@@ -204,7 +212,7 @@ public class NoteSystem extends JFrame {
         });
 
         //Add button
-        JButton addButton = new JButton("Add...");
+        final JButton addButton = new JButton("Add...");
         addButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent ae) {
@@ -244,6 +252,24 @@ public class NoteSystem extends JFrame {
         topButtonBar.add(addButton);
         topButtonBar.add(Box.createRigidArea(new Dimension(20, 30)));
         topButtonBar.add(deleteButton);
+        
+        createNoteButton.addActionListener(new ActionListener(){
+
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                Form_CreateNote form = new Form_CreateNote(MainWindow);
+            }
+            
+        });
+        
+        newNoteButton.addActionListener(new ActionListener(){
+
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                addButton.doClick();
+            }
+            
+        });
 
         //Spacer panel
         JPanel spacerPanel = new JPanel();

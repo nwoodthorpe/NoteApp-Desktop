@@ -57,6 +57,8 @@ public class Form_NoteAdded extends JDialog{
         contentPanel.add(Box.createRigidArea(new Dimension(40, 40)));
         contentPanel.add(buttonPanel);
 
+        getRootPane().setDefaultButton(okButton);
+        
         setModal(true);
         setVisible(true);
     }
