@@ -106,9 +106,9 @@ public class NoteSystem extends JFrame {
         JMenu fileMenu = new JMenu("File");
 
         JMenuItem createNoteButton = new JMenuItem("Create New Note...");
-        
+
         JMenuItem newNoteButton = new JMenuItem("Add Note....");
-        
+
         JMenuItem settingsButton = new JMenuItem("Settings");
         settingsButton.addActionListener(new ActionListener() {
             @Override
@@ -123,7 +123,7 @@ public class NoteSystem extends JFrame {
                 System.exit(0);
             }
         });
-        
+
         fileMenu.add(createNoteButton);
         fileMenu.add(newNoteButton);
         fileMenu.add(new JSeparator());
@@ -152,7 +152,6 @@ public class NoteSystem extends JFrame {
         sortBox.addItem("Date - Oldest First");
         sortBox.addItem("File Size - Largest First");
         sortBox.addItem("File Size - Smallest First");
-        sortBox.addItem("Most Viewed");
 
         //Separator lines
         JSeparator line = new JSeparator(SwingConstants.VERTICAL) {
@@ -252,23 +251,23 @@ public class NoteSystem extends JFrame {
         topButtonBar.add(addButton);
         topButtonBar.add(Box.createRigidArea(new Dimension(20, 30)));
         topButtonBar.add(deleteButton);
-        
-        createNoteButton.addActionListener(new ActionListener(){
+
+        createNoteButton.addActionListener(new ActionListener() {
 
             @Override
             public void actionPerformed(ActionEvent ae) {
                 Form_CreateNote form = new Form_CreateNote(MainWindow);
             }
-            
+
         });
-        
-        newNoteButton.addActionListener(new ActionListener(){
+
+        newNoteButton.addActionListener(new ActionListener() {
 
             @Override
             public void actionPerformed(ActionEvent ae) {
                 addButton.doClick();
             }
-            
+
         });
 
         //Spacer panel
@@ -290,6 +289,15 @@ public class NoteSystem extends JFrame {
             @Override
             public boolean isCellEditable(int row, int col) {
                 return false;
+            }
+
+            @Override
+            public String getToolTipText(MouseEvent e) {
+                int row = rowAtPoint(e.getPoint());
+                int column = columnAtPoint(e.getPoint());
+
+                Object value = getValueAt(row, column);
+                return value == null ? null : value.toString();
             }
         };
         selectionTable.setDefaultRenderer(Object.class, new CustomTableRenderer());
@@ -400,7 +408,7 @@ public class NoteSystem extends JFrame {
                 }
             }
         }
-        
+
         return dir.delete();
     }
 
