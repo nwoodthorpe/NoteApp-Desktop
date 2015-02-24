@@ -1,5 +1,7 @@
 package NoteSystem;
 
+import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Image;
@@ -41,7 +43,10 @@ import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellEditor;
 
 /**
  *
@@ -77,6 +82,8 @@ public class NoteSystem extends JFrame {
     static String defaultPath = Paths.get("").toAbsolutePath().toString();
     ;
     int sortType = 0;
+
+    int editableRow = -2;
 
     public static NoteSystem MainWindow;
 
@@ -137,7 +144,7 @@ public class NoteSystem extends JFrame {
         JLabel sortLabel = new JLabel("Sort by:    ");
 
         //Sort Combobox
-        JComboBox sortBox = new JComboBox() {
+        final JComboBox sortBox = new JComboBox() {
             @Override
             public Dimension getMaximumSize() {
                 Dimension max = super.getMaximumSize();
@@ -176,7 +183,7 @@ public class NoteSystem extends JFrame {
         secondLine.setPreferredSize(new Dimension(2, 30));
 
         //Search textbox
-        JTextField searchField = new JTextField("Search...") {
+        final JTextField searchField = new JTextField("Search...") {
             @Override
             public Dimension getMaximumSize() {
                 Dimension max = super.getMaximumSize();
@@ -219,7 +226,8 @@ public class NoteSystem extends JFrame {
             }
         });
 
-        JButton deleteButton = new JButton("Delete");
+        final JButton deleteButton = new JButton("Delete");
+        deleteButton.setEnabled(false);
         deleteButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent ae) {
@@ -236,6 +244,35 @@ public class NoteSystem extends JFrame {
                 }
             }
         });
+        
+        final JButton editButton = new JButton("Edit");
+        editButton.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                if (editButton.getText().equals("Edit")) {
+                    editButton.setText("Save");
+                    searchField.setEnabled(false);
+                    sortBox.setEnabled(false);
+                    addButton.setEnabled(false);
+                    deleteButton.setEnabled(false);
+                    editableRow = selectionTable.getSelectedRow();
+                    selectionTable.editCellAt(selectionTable.getSelectedRow(), 0);
+                    selectionTable.repaint();
+                } else {
+                    editButton.setText("Edit");
+                    searchField.setEnabled(true);
+                    sortBox.setEnabled(true);
+                    addButton.setEnabled(true);
+                    deleteButton.setEnabled(true);
+                    editableRow = -2;
+                    selectionTable.editingCanceled(null);
+                    selectionTable.repaint();
+                }
+            }
+        });
+
+        
 
         //Add all the components to our panel
         topButtonBar.add(sortLabel);
@@ -249,6 +286,8 @@ public class NoteSystem extends JFrame {
         topButtonBar.add(secondLine);
         topButtonBar.add(Box.createRigidArea(new Dimension(20, 30)));
         topButtonBar.add(addButton);
+        topButtonBar.add(Box.createRigidArea(new Dimension(20, 30)));
+        topButtonBar.add(editButton);
         topButtonBar.add(Box.createRigidArea(new Dimension(20, 30)));
         topButtonBar.add(deleteButton);
 
@@ -284,11 +323,24 @@ public class NoteSystem extends JFrame {
         tablePanel.setLayout(new BoxLayout(tablePanel, BoxLayout.X_AXIS));
 
         //Set up table and tablemodel
-        dtm = new DefaultTableModel(data, columnNames);
+        dtm = new DefaultTableModel(data, columnNames) {
+
+        };
+
         selectionTable = new JTable(dtm) {
             @Override
             public boolean isCellEditable(int row, int col) {
+                if ((row == editableRow) && (col == 0 || col == 1)) {
+                    return true;
+                }
                 return false;
+            }
+
+            @Override
+            public Component prepareEditor(TableCellEditor editor, int row, int col) {
+                Component c = super.prepareEditor(editor, row, col);
+                c.setBackground(new Color(229, 228, 247));
+                return c;
             }
 
             @Override
@@ -300,8 +352,9 @@ public class NoteSystem extends JFrame {
                 return value == null ? null : value.toString();
             }
         };
-        selectionTable.setDefaultRenderer(Object.class, new CustomTableRenderer());
+        selectionTable.setDefaultRenderer(Object.class, new CustomTableRenderer(MainWindow));
         selectionTable.setRowHeight(40);
+        selectionTable.getTableHeader().setReorderingAllowed(false);
         selectionTable.setRowSelectionAllowed(true);
         selectionTable.setShowVerticalLines(false);
         selectionTable.setShowGrid(false);
@@ -332,12 +385,36 @@ public class NoteSystem extends JFrame {
             }
 
         });
+
+        selectionTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+
+            @Override
+            public void valueChanged(ListSelectionEvent lse) {
+                if (editableRow != -2) {
+                    if (selectionTable.getSelectedRow() != editableRow) {
+                        selectionTable.addRowSelectionInterval(editableRow, editableRow);
+                    }
+                    selectionTable.editCellAt(editableRow, selectionTable.getSelectedColumn());
+                }
+            }
+
+        });
+
         selectionTable.addMouseListener(new MouseListener() {
             @Override
             public void mouseClicked(MouseEvent me) {
-                if (me.getClickCount() == 2) {
-                    System.out.println(selectionTable.getSelectedRow());
-                    Form_ListNoteContents noteContents = new Form_ListNoteContents(MainWindow, selectionTable.getSelectedRow());
+                if (editableRow == -2) {
+                    if (me.getClickCount() == 2) {
+                        Form_ListNoteContents noteContents = new Form_ListNoteContents(MainWindow, selectionTable.getSelectedRow());
+                    }
+
+                    if (selectionTable.getSelectedRow() != -1) {
+                        deleteButton.setEnabled(true);
+                    } else {
+                        deleteButton.setEnabled(false);
+                    }
+                }else{
+                    selectionTable.editCellAt(editableRow, selectionTable.getSelectedColumn());
                 }
             }
 
@@ -374,7 +451,7 @@ public class NoteSystem extends JFrame {
         contentPanel.add(tablePanel);
 
         frame.setJMenuBar(menuBar);
-        frame.setSize(700, 600);
+        frame.setSize(800, 600);
         frame.setVisible(true);
         try {
             noteList.refreshNoteList();
