@@ -23,6 +23,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Scanner;
 import javax.imageio.ImageIO;
 import javax.swing.Box;
@@ -99,7 +100,7 @@ public class NoteSystem extends JFrame {
         JPanel titlePanel = new JPanel();
         titlePanel.setLayout(new BoxLayout(titlePanel, BoxLayout.X_AXIS));
 
-        JLabel title = new JLabel("Title will be here");
+        JLabel title = new JLabel("My Notebook");
         title.setFont(new Font("Arial", Font.BOLD, 25));
         titlePanel.add(title);
 
@@ -112,18 +113,16 @@ public class NoteSystem extends JFrame {
 
         JMenu fileMenu = new JMenu("File");
 
-        JMenuItem createNoteButton = new JMenuItem("Create New Note...");
-
-        JMenuItem newNoteButton = new JMenuItem("Add Note....");
-
-        JMenuItem settingsButton = new JMenuItem("Settings");
+        final JMenuItem createNoteButton = new JMenuItem("Create New Note...");
+        final JMenuItem newNoteButton = new JMenuItem("Add Note....");
+        final JMenuItem settingsButton = new JMenuItem("Settings");
         settingsButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent ae) {
                 Form_Settings settingsForm = new Form_Settings(MainWindow);
             }
         });
-        JMenuItem exitButton = new JMenuItem("Exit");
+        final JMenuItem exitButton = new JMenuItem("Exit");
         exitButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent ae) {
@@ -138,7 +137,21 @@ public class NoteSystem extends JFrame {
         fileMenu.add(new JSeparator());
         fileMenu.add(exitButton);
 
+        JMenu editMenu = new JMenu("Edit");
+        
+        final JMenuItem editMenuButton = new JMenuItem("Edit Title/Description"){{
+            setEnabled(false);
+        }};
+        final JMenuItem deleteMenuButton = new JMenuItem("Delete Note"){{
+            setEnabled(false);
+        }};
+        
+        editMenu.add(editMenuButton);
+        editMenu.add(new JSeparator());
+        editMenu.add(deleteMenuButton);
+        
         menuBar.add(fileMenu);
+        menuBar.add(editMenu);
 
         //Sort Label
         JLabel sortLabel = new JLabel("Sort by:    ");
@@ -239,35 +252,46 @@ public class NoteSystem extends JFrame {
                         System.out.println(deleteDir(noteFolder));
                         noteList.refreshNoteList();
                         populateTable();
-
                     }
                 }
             }
         });
         
         final JButton editButton = new JButton("Edit");
+        editButton.setEnabled(false);
         editButton.addActionListener(new ActionListener() {
 
             @Override
             public void actionPerformed(ActionEvent ae) {
                 if (editButton.getText().equals("Edit")) {
                     editButton.setText("Save");
+                    editMenuButton.setText("Save Title/Description");
                     searchField.setEnabled(false);
                     sortBox.setEnabled(false);
                     addButton.setEnabled(false);
                     deleteButton.setEnabled(false);
+                    createNoteButton.setEnabled(false);
+                    newNoteButton.setEnabled(false);
+                    deleteMenuButton.setEnabled(false);
+                    
                     editableRow = selectionTable.getSelectedRow();
                     selectionTable.editCellAt(selectionTable.getSelectedRow(), 0);
                     selectionTable.repaint();
                 } else {
                     editButton.setText("Edit");
+                    editMenuButton.setText("Edit Title/Description");
                     searchField.setEnabled(true);
                     sortBox.setEnabled(true);
                     addButton.setEnabled(true);
                     deleteButton.setEnabled(true);
-                    editableRow = -2;
-                    selectionTable.editingCanceled(null);
+                    createNoteButton.setEnabled(true);
+                    newNoteButton.setEnabled(true);
+                    deleteMenuButton.setEnabled(true);
+                    
+                    selectionTable.editCellAt(0, 2);
+                    saveNote(editableRow, (String)selectionTable.getValueAt(editableRow, 0), (String)selectionTable.getValueAt(editableRow, 1));
                     selectionTable.repaint();
+                    editableRow = -2;
                 }
             }
         });
@@ -292,7 +316,6 @@ public class NoteSystem extends JFrame {
         topButtonBar.add(deleteButton);
 
         createNoteButton.addActionListener(new ActionListener() {
-
             @Override
             public void actionPerformed(ActionEvent ae) {
                 Form_CreateNote form = new Form_CreateNote(MainWindow);
@@ -307,6 +330,24 @@ public class NoteSystem extends JFrame {
                 addButton.doClick();
             }
 
+        });
+        
+        editMenuButton.addActionListener(new ActionListener(){
+
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                editButton.doClick();
+            }
+            
+        });
+        
+        deleteMenuButton.addActionListener(new ActionListener(){
+
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                deleteButton.doClick();
+            }
+            
         });
 
         //Spacer panel
@@ -410,8 +451,14 @@ public class NoteSystem extends JFrame {
 
                     if (selectionTable.getSelectedRow() != -1) {
                         deleteButton.setEnabled(true);
+                        editButton.setEnabled(true);
+                        deleteMenuButton.setEnabled(true);
+                        editMenuButton.setEnabled(true);
                     } else {
                         deleteButton.setEnabled(false);
+                        editButton.setEnabled(false);
+                        deleteMenuButton.setEnabled(false);
+                        editMenuButton.setEnabled(false);
                     }
                 }else{
                     selectionTable.editCellAt(editableRow, selectionTable.getSelectedColumn());
@@ -475,7 +522,46 @@ public class NoteSystem extends JFrame {
         populateTable();
     }
 
-    public static boolean deleteDir(File dir) {
+    public void saveNote(int row, String title, String desc){
+        Note newNote = noteList.list.get(row);
+        String oldTitle = newNote.title;
+        newNote.description = desc;
+        newNote.title = title;
+        overwriteNote(newNote, oldTitle);
+    }
+    
+    public void overwriteNote(Note newNote, String oldTitle) {
+        File noteDirectory = new File(defaultPath + "/"+oldTitle);
+        File dataFile = new File(noteDirectory + "/data.info");
+        ArrayList<String> info = new ArrayList<>();
+        //Read in the data file
+        try {
+                Scanner infoReader = new Scanner(dataFile);
+
+                while (infoReader.hasNext()) {
+                    info.add(infoReader.nextLine());
+                }
+                infoReader.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+        }
+        
+        info.set(2, "Title=" + newNote.title);
+        info.set(3, "Description=" + newNote.description);
+        
+        //print the new data file
+        try{
+            PrintStream outStream = new PrintStream(dataFile);
+            for(int i = 0; i<info.size(); i++){
+                outStream.println(info.get(i));
+            }
+            outStream.close();
+        }catch(Exception e){
+        }
+        noteDirectory.renameTo(new File(defaultPath + "/" + newNote.title));
+    }
+    
+    public boolean deleteDir(File dir) {
         if (dir.isDirectory()) {
             String[] children = dir.list();
             for (int i = 0; i < children.length; i++) {
