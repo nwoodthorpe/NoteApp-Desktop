@@ -23,11 +23,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Scanner;
 import javax.imageio.ImageIO;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.DefaultCellEditor;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
@@ -113,29 +113,29 @@ public class NoteSystem extends JFrame {
 
         JMenu fileMenu = new JMenu("File");
 
-        final JMenuItem createNoteButton = new JMenuItem("Create New Note...");
-        final JMenuItem newNoteButton = new JMenuItem("Add Note....");
-        final JMenuItem settingsButton = new JMenuItem("Settings");
-        settingsButton.addActionListener(new ActionListener() {
+        final JMenuItem createNoteMenuButton = new JMenuItem("Create New Note...");
+        final JMenuItem newNoteMenuButton = new JMenuItem("Add Note....");
+        final JMenuItem settingsMenuButton = new JMenuItem("Settings");
+        settingsMenuButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent ae) {
                 Form_Settings settingsForm = new Form_Settings(MainWindow);
             }
         });
-        final JMenuItem exitButton = new JMenuItem("Exit");
-        exitButton.addActionListener(new ActionListener() {
+        final JMenuItem exitMenuButton = new JMenuItem("Exit");
+        exitMenuButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent ae) {
                 System.exit(0);
             }
         });
 
-        fileMenu.add(createNoteButton);
-        fileMenu.add(newNoteButton);
+        fileMenu.add(createNoteMenuButton);
+        fileMenu.add(newNoteMenuButton);
         fileMenu.add(new JSeparator());
-        fileMenu.add(settingsButton);
+        fileMenu.add(settingsMenuButton);
         fileMenu.add(new JSeparator());
-        fileMenu.add(exitButton);
+        fileMenu.add(exitMenuButton);
 
         JMenu editMenu = new JMenu("Edit");
         
@@ -206,18 +206,25 @@ public class NoteSystem extends JFrame {
             }
         };
         searchField.setPreferredSize(new Dimension(180, 25));
+        searchField.setForeground(Color.LIGHT_GRAY);
         searchField.addFocusListener(new FocusListener() {
             @Override
             public void focusGained(FocusEvent fe) {
                 JTextField search = (JTextField) fe.getSource();
                 if (search.getText().equals("Search...")) {
                     search.setText("");
+                    search.setForeground(Color.BLACK);
                 }
             }
+            
 
             @Override
             public void focusLost(FocusEvent fe) {
-
+                JTextField search = (JTextField) fe.getSource();
+                if(search.getText().equals("")){
+                    search.setText("Search...");
+                    search.setForeground(Color.LIGHT_GRAY);
+                }
             }
         });
 
@@ -257,35 +264,35 @@ public class NoteSystem extends JFrame {
             }
         });
         
-        final JButton editButton = new JButton("Edit");
-        editButton.setEnabled(false);
-        editButton.addActionListener(new ActionListener() {
+        final JButton renameButton = new JButton("Rename");
+        renameButton.setEnabled(false);
+        renameButton.addActionListener(new ActionListener() {
 
             @Override
             public void actionPerformed(ActionEvent ae) {
-                if (editButton.getText().equals("Edit")) {
-                    editButton.setText("Save");
+                if (renameButton.getText().equals("Rename")) {
+                    renameButton.setText("Save");
                     editMenuButton.setText("Save Title/Description");
                     searchField.setEnabled(false);
                     sortBox.setEnabled(false);
                     addButton.setEnabled(false);
                     deleteButton.setEnabled(false);
-                    createNoteButton.setEnabled(false);
-                    newNoteButton.setEnabled(false);
+                    createNoteMenuButton.setEnabled(false);
+                    newNoteMenuButton.setEnabled(false);
                     deleteMenuButton.setEnabled(false);
                     
                     editableRow = selectionTable.getSelectedRow();
                     selectionTable.editCellAt(selectionTable.getSelectedRow(), 0);
                     selectionTable.repaint();
                 } else {
-                    editButton.setText("Edit");
+                    renameButton.setText("Rename");
                     editMenuButton.setText("Edit Title/Description");
                     searchField.setEnabled(true);
                     sortBox.setEnabled(true);
                     addButton.setEnabled(true);
                     deleteButton.setEnabled(true);
-                    createNoteButton.setEnabled(true);
-                    newNoteButton.setEnabled(true);
+                    createNoteMenuButton.setEnabled(true);
+                    newNoteMenuButton.setEnabled(true);
                     deleteMenuButton.setEnabled(true);
                     
                     selectionTable.editCellAt(0, 2);
@@ -311,11 +318,11 @@ public class NoteSystem extends JFrame {
         topButtonBar.add(Box.createRigidArea(new Dimension(20, 30)));
         topButtonBar.add(addButton);
         topButtonBar.add(Box.createRigidArea(new Dimension(20, 30)));
-        topButtonBar.add(editButton);
+        topButtonBar.add(renameButton);
         topButtonBar.add(Box.createRigidArea(new Dimension(20, 30)));
         topButtonBar.add(deleteButton);
 
-        createNoteButton.addActionListener(new ActionListener() {
+        createNoteMenuButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent ae) {
                 Form_CreateNote form = new Form_CreateNote(MainWindow);
@@ -323,7 +330,7 @@ public class NoteSystem extends JFrame {
 
         });
 
-        newNoteButton.addActionListener(new ActionListener() {
+        newNoteMenuButton.addActionListener(new ActionListener() {
 
             @Override
             public void actionPerformed(ActionEvent ae) {
@@ -336,7 +343,7 @@ public class NoteSystem extends JFrame {
 
             @Override
             public void actionPerformed(ActionEvent ae) {
-                editButton.doClick();
+                renameButton.doClick();
             }
             
         });
@@ -394,6 +401,7 @@ public class NoteSystem extends JFrame {
             }
         };
         selectionTable.setDefaultRenderer(Object.class, new CustomTableRenderer(MainWindow));
+        selectionTable.setDefaultEditor(Object.class, new CustomTableEditor(new JTextField()));
         selectionTable.setRowHeight(40);
         selectionTable.getTableHeader().setReorderingAllowed(false);
         selectionTable.setRowSelectionAllowed(true);
@@ -451,12 +459,12 @@ public class NoteSystem extends JFrame {
 
                     if (selectionTable.getSelectedRow() != -1) {
                         deleteButton.setEnabled(true);
-                        editButton.setEnabled(true);
+                        renameButton.setEnabled(true);
                         deleteMenuButton.setEnabled(true);
                         editMenuButton.setEnabled(true);
                     } else {
                         deleteButton.setEnabled(false);
-                        editButton.setEnabled(false);
+                        renameButton.setEnabled(false);
                         deleteMenuButton.setEnabled(false);
                         editMenuButton.setEnabled(false);
                     }
