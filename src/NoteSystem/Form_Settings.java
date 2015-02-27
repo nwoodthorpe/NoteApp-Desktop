@@ -31,6 +31,7 @@ public class Form_Settings extends JDialog{
     public void genGUI() {
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setSize(600, 300);
+        setTitle("Settings");
 
         JPanel contentPanel = (JPanel) getContentPane();
         contentPanel.setBorder(new EmptyBorder(10, 10, 10, 10));

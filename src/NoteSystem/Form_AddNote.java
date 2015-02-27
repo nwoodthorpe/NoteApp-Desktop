@@ -35,6 +35,7 @@ public class Form_AddNote extends JDialog {
     public void genGUI() {
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setSize(400, 300);
+        setTitle("Add Note");
 
         //Error labels
         final JLabel selectErrorLabel = new JLabel(" ") {

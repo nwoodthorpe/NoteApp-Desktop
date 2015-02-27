@@ -74,7 +74,8 @@ public class Form_ListNoteContents extends JDialog {
     public void genGUI() {
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setSize(400, 400);
-
+        setTitle(mainForm.noteList.list.get(selected).title + " - Note Contents");
+        
         JPanel contentPanel = (JPanel) getContentPane();
         contentPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
         contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));

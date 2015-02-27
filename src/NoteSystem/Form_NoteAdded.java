@@ -28,6 +28,7 @@ public class Form_NoteAdded extends JDialog{
     public void genGUI(){
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setSize(300, 200);
+        setTitle("Note " + type);
 
         JPanel contentPanel = (JPanel) getContentPane();
         contentPanel.setBorder(new EmptyBorder(10, 10, 10, 10));

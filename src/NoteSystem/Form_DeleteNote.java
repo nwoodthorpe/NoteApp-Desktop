@@ -27,6 +27,7 @@ public class Form_DeleteNote extends JDialog{
     public void genGUI(){
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setSize(300, 200);
+        setTitle("Delete Note");
 
         JPanel contentPanel = (JPanel) getContentPane();
         contentPanel.setBorder(new EmptyBorder(10, 10, 10, 10));

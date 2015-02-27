@@ -38,6 +38,7 @@ public class Form_EditNoteProperties extends JDialog {
     public void genGUI() {
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setSize(400, 260);
+        setTitle("Edit Note Properties");
 
         JPanel contentPanel = (JPanel) getContentPane();
         contentPanel.setBorder(new EmptyBorder(10, 10, 10, 10));

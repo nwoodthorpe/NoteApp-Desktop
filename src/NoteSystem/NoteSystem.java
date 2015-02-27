@@ -89,6 +89,7 @@ public class NoteSystem extends JFrame {
     public static NoteSystem MainWindow;
 
     protected void genGUI() {
+        setTitle("My Notepad");
         noteList = new NoteList(defaultPath);
         JFrame frame = new JFrame();
         JPanel contentPanel = (JPanel) frame.getContentPane();
