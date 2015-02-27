@@ -267,7 +267,7 @@ public class Form_CreateNoteTitleDesc extends JDialog {
                         e.printStackTrace();
                     }
 
-                    Form_NoteAdded noteAdded = new Form_NoteAdded(mainForm);
+                    Form_NoteAdded noteAdded = new Form_NoteAdded(mainForm, "Created");
                     added = true;
                     dispose();
 

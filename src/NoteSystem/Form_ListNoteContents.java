@@ -9,15 +9,15 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
-import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.WindowConstants;
 import javax.swing.border.EmptyBorder;
@@ -79,6 +79,39 @@ public class Form_ListNoteContents extends JDialog {
         contentPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
         contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
 
+        JMenuBar menuBar = new JMenuBar();
+        
+        JMenu fileMenu = new JMenu("File");
+        JMenuItem closeMenuButton = new JMenuItem("Close");
+        closeMenuButton.addActionListener(new ActionListener(){
+
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                dispose();
+            }
+            
+        });
+        fileMenu.add(closeMenuButton);
+        
+        JMenu editMenu = new JMenu("Edit");
+        JMenuItem editNoteButton = new JMenuItem("Edit Note Properties...");
+        editNoteButton.addActionListener(new ActionListener(){
+
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                Form_EditNoteProperties form = new Form_EditNoteProperties(mainForm, selected);
+            }
+            
+        });
+        editMenu.add(editNoteButton);
+        
+        
+        menuBar.add(fileMenu);
+        menuBar.add(editMenu);
+        menuBar.add(Box.createHorizontalGlue());
+        
+        
+        
         //Panel for the title
         JPanel titlePanel = new JPanel();
         titlePanel.setLayout(new BoxLayout(titlePanel, BoxLayout.X_AXIS));
@@ -156,6 +189,8 @@ public class Form_ListNoteContents extends JDialog {
         contentPanel.add(Box.createRigidArea(new Dimension(15, 15)));
         contentPanel.add(buttonPanel);
 
+        setJMenuBar(menuBar);
+        
         setModal(true);
         setVisible(true);
     }

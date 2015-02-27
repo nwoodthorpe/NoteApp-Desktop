@@ -16,10 +16,12 @@ import javax.swing.border.EmptyBorder;
 
 public class Form_NoteAdded extends JDialog{
     NoteSystem mainForm;
+    String type;
 
-    public Form_NoteAdded(NoteSystem mainForm) {
+    public Form_NoteAdded(NoteSystem mainForm, String type) {
         super();
         this.mainForm = mainForm;
+        this.type = type;
         genGUI();
     }
     
@@ -34,7 +36,7 @@ public class Form_NoteAdded extends JDialog{
         JPanel textPanel = new JPanel();
         textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.X_AXIS));
 
-        final JLabel titleLabel = new JLabel("Successfully Added!");
+        final JLabel titleLabel = new JLabel("Successfully " + type + "!");
         titleLabel.setFont(new Font("Arial", Font.BOLD, 20));
         textPanel.add(titleLabel);
 
